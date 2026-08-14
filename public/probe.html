@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGPU capability probe</title>
+<style>
+  :root {
+    --paper: #eceef2;
+    --ink: #12151c;
+    --muted: #666f80;
+    --rule: #c3c9d4;
+    --mark: #3b3fd8;
+    --warn: #a8480f;
+    --ok: #1f6b3a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    padding: 40px 24px 80px;
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  .sub { color: var(--muted); margin: 0 0 32px; }
+  section { margin-bottom: 32px; }
+  h2 {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+  table { width: 100%; border-collapse: collapse; }
+  td {
+    padding: 5px 0;
+    vertical-align: top;
+    border-bottom: 1px dotted var(--rule);
+  }
+  td:first-child { color: var(--muted); width: 46%; padding-right: 16px; }
+  td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .yes { color: var(--ok); }
+  .no { color: var(--warn); }
+  .verdict {
+    border-left: 3px solid var(--mark);
+    padding: 12px 0 12px 16px;
+    background: rgba(59,63,216,0.05);
+    white-space: pre-wrap;
+  }
+  .fail {
+    border-left-color: var(--warn);
+    background: rgba(168,72,15,0.06);
+  }
+  button {
+    font: inherit;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    padding: 9px 18px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+  }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  .big { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>WebGPU capability probe</h1>
+  <p class="sub">Step zero. What this machine will actually let you allocate and compute.</p>
+
+  <section id="support"></section>
+  <section id="adapter"></section>
+  <section id="features"></section>
+  <section id="limits"></section>
+
+  <section>
+    <h2>Baseline throughput</h2>
+    <p class="sub" style="margin:0 0 12px">Naive fp32 matmul, 1024³, no tiling. This is the floor you optimize against.</p>
+    <button id="bench" disabled>Run benchmark</button>
+    <div id="benchout" style="margin-top:16px"></div>
+  </section>
+
+  <section>
+    <h2>Verdict</h2>
+    <div id="verdict" class="verdict">Probing…</div>
+  </section>
+</main>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const mib = b => (b / 1048576).toFixed(0) + " MiB";
+
+function table(rows) {
+  return "<table>" + rows.map(([k, v, cls]) =>
+    `<tr><td>${k}</td><td class="${cls || ""}">${v}</td></tr>`).join("") + "</table>";
+}
+
+let device = null;
+
+async function probe() {
+  if (!navigator.gpu) {
+    $("support").innerHTML = `<h2>Support</h2>${table([["navigator.gpu", "absent", "no"]])}`;
+    $("verdict").className = "verdict fail";
+    $("verdict").textContent =
+      "No WebGPU. Use Chrome 113+, Edge, or Safari 18+.\n" +
+      "On Linux you may need: --enable-features=Vulkan,UseSkiaRenderer";
+    return;
+  }
+
+  const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+  if (!adapter) {
+    $("verdict").className = "verdict fail";
+    $("verdict").textContent = "navigator.gpu exists but no adapter. GPU likely blocklisted — check chrome://gpu.";
+    return;
+  }
+
+  const info = adapter.info || {};
+  $("support").innerHTML = `<h2>Support</h2>${table([["navigator.gpu", "present", "yes"]])}`;
+  $("adapter").innerHTML = `<h2>Adapter</h2>${table([
+    ["vendor", info.vendor || "—"],
+    ["architecture", info.architecture || "—"],
+    ["device", info.device || "—"],
+    ["description", info.description || "—"],
+  ])}`;
+
+  const want = ["shader-f16", "subgroups", "timestamp-query"];
+  $("features").innerHTML = `<h2>Features</h2>${table(
+    want.map(f => {
+      const has = adapter.features.has(f);
+      return [f, has ? "available" : "missing", has ? "yes" : "no"];
+    })
+  )}`;
+
+  const L = adapter.limits;
+  $("limits").innerHTML = `<h2>Limits (adapter maximum)</h2>${table([
+    ["maxBufferSize", mib(L.maxBufferSize)],
+    ["maxStorageBufferBindingSize", mib(L.maxStorageBufferBindingSize)],
+    ["maxComputeWorkgroupStorageSize", (L.maxComputeWorkgroupStorageSize / 1024).toFixed(0) + " KiB"],
+    ["maxComputeInvocationsPerWorkgroup", L.maxComputeInvocationsPerWorkgroup],
+    ["maxComputeWorkgroupSizeX", L.maxComputeWorkgroupSizeX],
+    ["maxStorageBuffersPerShaderStage", L.maxStorageBuffersPerShaderStage],
+  ])}`;
+
+  const requiredFeatures = want.filter(f => adapter.features.has(f) && f !== "subgroups");
+  device = await adapter.requestDevice({
+    requiredFeatures,
+    requiredLimits: {
+      maxBufferSize: L.maxBufferSize,
+      maxStorageBufferBindingSize: L.maxStorageBufferBindingSize,
+    },
+  });
+
+  const f16 = adapter.features.has("shader-f16");
+  const bind = L.maxStorageBufferBindingSize;
+  const notes = [];
+
+  notes.push(`Largest single tensor you can bind: ${mib(bind)}.`);
+  notes.push(f16
+    ? "shader-f16 available — use f16 accumulation in decode kernels."
+    : "shader-f16 MISSING — fp32 only. Doubles bandwidth pressure; expect roughly half the decode speed.");
+  notes.push(adapter.features.has("timestamp-query")
+    ? "timestamp-query available — you get real per-kernel GPU timings for the inspector panel."
+    : "timestamp-query missing — fall back to wall-clock around onSubmittedWorkDone(). Coarser, still usable.");
+
+  const q4_05b = 0.5e9 * 0.5 + 140e6;
+  notes.push(bind > q4_05b / 4
+    ? "Qwen2.5-0.5B at int4 (~390 MB) is comfortably in range as your milestone-3 target."
+    : "Tight. Split large weight tensors across multiple bindings, or start with a smaller model.");
+
+  notes.push("WebGPU does not expose total VRAM. Treat maxBufferSize as your per-tensor ceiling and measure real capacity empirically.");
+
+  $("verdict").textContent = notes.join("\n\n");
+  $("bench").disabled = false;
+}
+
+const WGSL = `
+struct Dims { m: u32, n: u32, k: u32, pad: u32 };
+@group(0) @binding(0) var<storage, read> a: array<f32>;
+@group(0) @binding(1) var<storage, read> b: array<f32>;
+@group(0) @binding(2) var<storage, read_write> c: array<f32>;
+@group(0) @binding(3) var<uniform> d: Dims;
+
+@compute @workgroup_size(16, 16)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let row = gid.y;
+  let col = gid.x;
+  if (row >= d.m || col >= d.n) { return; }
+  var acc = 0.0;
+  for (var i = 0u; i < d.k; i = i + 1u) {
+    acc = acc + a[row * d.k + i] * b[i * d.n + col];
+  }
+  c[row * d.n + col] = acc;
+}`;
+
+async function bench() {
+  $("bench").disabled = true;
+  $("benchout").textContent = "running…";
+
+  const N = 1024;
+  const bytes = N * N * 4;
+  const mk = usage => device.createBuffer({ size: bytes, usage });
+  const S = GPUBufferUsage.STORAGE;
+  const a = mk(S | GPUBufferUsage.COPY_DST);
+  const b = mk(S | GPUBufferUsage.COPY_DST);
+  const c = mk(S);
+
+  const fill = new Float32Array(N * N);
+  for (let i = 0; i < fill.length; i++) fill[i] = Math.random() - 0.5;
+  device.queue.writeBuffer(a, 0, fill);
+  device.queue.writeBuffer(b, 0, fill);
+
+  const dims = device.createBuffer({
+    size: 16,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(dims, 0, new Uint32Array([N, N, N, 0]));
+
+  const pipeline = device.createComputePipeline({
+    layout: "auto",
+    compute: { module: device.createShaderModule({ code: WGSL }), entryPoint: "main" },
+  });
+
+  const bg = device.createBindGroup({
+    layout: pipeline.getBindGroupLayout(0),
+    entries: [a, b, c, dims].map((buffer, binding) => ({ binding, resource: { buffer } })),
+  });
+
+  const dispatch = () => {
+    const enc = device.createCommandEncoder();
+    const pass = enc.beginComputePass();
+    pass.setPipeline(pipeline);
+    pass.setBindGroup(0, bg);
+    pass.dispatchWorkgroups(N / 16, N / 16);
+    pass.end();
+    device.queue.submit([enc.finish()]);
+  };
+
+  dispatch();
+  await device.queue.onSubmittedWorkDone();
+
+  const iters = 10;
+  const t0 = performance.now();
+  for (let i = 0; i < iters; i++) dispatch();
+  await device.queue.onSubmittedWorkDone();
+  const ms = (performance.now() - t0) / iters;
+
+  const gflops = (2 * N ** 3) / (ms / 1000) / 1e9;
+  $("benchout").innerHTML =
+    `<div class="big">${gflops.toFixed(1)} GFLOP/s</div>` +
+    table([
+      ["per iteration", ms.toFixed(2) + " ms"],
+      ["problem", `${N}×${N}×${N} fp32`],
+      ["kernel", "naive, no shared memory"],
+    ]) +
+    `<p class="sub" style="margin-top:10px">Write this number down. Milestone 4 tiling should beat it several times over.</p>`;
+
+  [a, b, c, dims].forEach(x => x.destroy());
+  $("bench").disabled = false;
+}
+
+$("bench").addEventListener("click", bench);
+probe().catch(e => {
+  $("verdict").className = "verdict fail";
+  $("verdict").textContent = "Probe failed: " + e.message;
+});
+</script>
+</body>
+</html>
