@@ -229,5 +229,5 @@ more here than the version that hides it.
 
 ## Licence
 
-Model weights are Qwen2.5-0.5B-Instruct, Apache 2.0, quantized offline. The engine code has no
-licence file yet — add one before anyone is invited to reuse it.
+Engine code is [MIT](LICENSE). Model weights are Qwen2.5-0.5B-Instruct, Apache 2.0, quantized
+offline and redistributed under that licence — they are not covered by the MIT grant above.
