@@ -1,0 +1,14 @@
+{
+  "name": "Enargeia — a language model running on your own GPU",
+  "short_name": "Enargeia",
+  "description": "A browser-native LLM inference engine. Hand-written WGSL compute kernels, int4 weights, no ML framework.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05050A",
+  "theme_color": "#05050A",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

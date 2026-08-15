@@ -22,29 +22,49 @@ const VIEWS = [
   { label: 'mobile-small', width: 320, height: 700 },
 ];
 
-// Preflight: every module the document references must actually be served as JavaScript.
+// Preflight: everything the document references must be served as the type it claims to be.
 //
-// A missing asset comes back as the SPA fallback — HTML with a 200 — and Cloudflare will cache
-// that response against the asset's URL. Requesting an asset during the window between a deploy
-// completing and it propagating is enough to poison the edge for that URL, which happened once
-// and cost an hour. So: check with plain fetches first, and refuse to open a browser until the
-// deployment is actually serving what the HTML asks for.
-const document_ = await (await fetch(TARGET)).text();
-const refs = [...document_.matchAll(/(?:src|href)="(\/assets\/[^"]+\.js)"/g)].map((m) => m[1]);
+// A missing file comes back as the SPA fallback — HTML with a 200 — and Cloudflare caches that
+// response against the file's URL. Requesting one in the window between a deploy completing and
+// the file propagating is enough to poison the edge for that path. It happened once with a
+// JavaScript chunk and once with `/apple-touch-icon.png`, which Safari probes on its own without
+// anything on the page asking it to. So every reference is checked with a plain fetch before a
+// browser is opened, and a mismatch is reported as a deployment problem rather than being
+// requested, cached, and then puzzled over.
+const EXPECTED = [
+  [/\.js$/, /javascript|ecmascript/],
+  [/\.css$/, /text\/css/],
+  [/\.svg$/, /image\/svg/],
+  [/\.png$/, /image\/png/],
+  [/\.woff2$/, /font\/woff2|application\/octet-stream/],
+  [/\.webmanifest$/, /manifest\+json|application\/json/],
+];
+
+const documentText = await (await fetch(TARGET)).text();
+const referenced = new Set(
+  [...documentText.matchAll(/(?:src|href)="(\/[^"]+\.(?:js|css|svg|png|woff2|webmanifest))"/g)].map((m) => m[1]),
+);
+// Icons the manifest names, which the document does not reference directly.
+if (referenced.has('/site.webmanifest')) {
+  const manifest = await (await fetch(new URL('/site.webmanifest', TARGET))).json().catch(() => null);
+  for (const icon of manifest?.icons ?? []) referenced.add(icon.src);
+}
+
 const bad = [];
-for (const ref of refs) {
+for (const ref of referenced) {
   const response = await fetch(new URL(ref, TARGET));
-  const type = response.headers.get('content-type') ?? '';
-  if (!response.ok || !/javascript|ecmascript/.test(type)) {
-    bad.push(`${ref} -> ${response.status} ${type}`);
+  const type = (response.headers.get('content-type') ?? '').split(';')[0];
+  const rule = EXPECTED.find(([pattern]) => pattern.test(ref));
+  if (!response.ok || (rule && !rule[1].test(type))) {
+    bad.push(`${ref} -> ${response.status} ${type || '(no type)'}`);
   }
 }
 if (bad.length) {
-  console.error('preflight failed — these are not being served as JavaScript:');
+  console.error('preflight failed — these are not served as the type they claim:');
   for (const line of bad) console.error(`  ${line}`);
   process.exit(1);
 }
-console.log(`preflight: ${refs.length} module${refs.length === 1 ? '' : 's'} served correctly`);
+console.log(`preflight: ${referenced.size} referenced files served correctly`);
 
 for (const view of VIEWS) {
   const browser = await webkit.launch();

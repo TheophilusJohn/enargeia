@@ -967,3 +967,25 @@ and automatic checks for overflow, undersized tap targets and console errors.
 and the first person to open it elsewhere found a broken section in seconds. Two of the six
 faults the first sweep found — bars that rendered full when empty, and a masthead that
 overflowed at 320 px — were browser-independent and had simply never been looked at.
+
+### 82. The favicon is the residual stream through layers, in two hues
+
+**Chosen:** three horizontal bars for layer boundaries, a vertical stroke through them for the
+residual stream, `--k0` above and `--k6` below, on a `--bg` tile. Drawn on a 16-unit grid so
+every edge lands on a device pixel at 16 CSS px.
+**Rejected:** the causal-mask staircase, which reads beautifully at 16px but is attention's
+image rather than the project's, and in attention's hue would have looked like a chart icon;
+a segmented stream, which reads as a battery; a plain two-tone bar, same; anything with more
+than two hues, which turns to noise at 16px.
+**Decided by:** rasterizing every candidate to a real 16×16 PNG and comparing them in a mock tab
+strip against light and dark chrome. Three of the eight first-round designs were perfectly legible
+at 512 px and unreadable at 16. Judging at the size the thing is used is the whole exercise.
+
+The two hues are the two ends of the kernel spectrum, used for what they mean: `--k0` is the
+embedding, where a token enters, and `--k6` is the sampler, where it leaves. The hue changes
+behind the middle bar, because that is where the stream is inside a layer. That keeps the
+colour encoding intact — the rule is that a kernel hue must mean that kernel, not that hues
+may never appear outside a chart.
+
+`tools/make-icons.mjs` generates the SVG and every raster, so the apple-touch-icon and the
+manifest icons cannot drift from the favicon.
