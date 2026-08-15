@@ -37,10 +37,12 @@ export class Chat {
   private readonly stop = el('button', { type: 'button', text: 'Stop' });
   private readonly turns: ChatTurn[] = [];
   private readonly engine: Engine;
+  private readonly replyCap: number;
   private busy = false;
 
   constructor(engine: Engine) {
     this.engine = engine;
+    this.replyCap = engine.replyCap;
 
     const composer = el('form', { class: 'composer' }, [this.input, this.send, this.stop]);
     composer.addEventListener('submit', (event) => {
@@ -93,6 +95,15 @@ export class Chat {
     this.transcript.append(list);
   }
 
+  /** A line of engine commentary in the transcript — not something the model said. */
+  private note(text: string): void {
+    this.transcript.append(el('div', { class: 'turn note-turn' }, [
+      el('span', { class: 'who', text: 'engine' }),
+      el('div', { class: 'body', text }),
+    ]));
+    this.transcript.scrollTop = this.transcript.scrollHeight;
+  }
+
   private appendTurn(role: 'user' | 'assistant', text: string): HTMLElement {
     const body = el('div', { class: 'body', text });
     this.transcript.append(
@@ -131,12 +142,21 @@ export class Chat {
           < 80;
         if (atBottom) this.transcript.scrollTop = this.transcript.scrollHeight;
       },
+      onTrimmed: (dropped) => {
+        this.note(`Dropped the ${dropped === 1 ? 'oldest exchange' : `${dropped} oldest exchanges`} — ` +
+          'the conversation no longer fits in a 2048-token context.');
+      },
       onDone: (stopped, message) => {
         turn.classList.remove('streaming');
         if (stopped === 'error') {
           body.textContent = `${reply}\n\n[stopped: ${message ?? 'unknown error'}]`;
         } else if (stopped === 'cancelled') {
           body.textContent = `${reply}\n\n[stopped]`;
+        } else if (stopped === 'limit') {
+          // A reply cut off at the cap looked exactly like a finished one, which is how a
+          // runaway reads as a complete answer that simply stops mid-sentence.
+          this.note(`Cut off at ${this.replyCap} tokens — the model did not end its turn. Small models ` +
+            'sometimes fail to emit a stop token; ask again, or start a new conversation.');
         } else if (reply.length === 0) {
           body.textContent = '[the model produced nothing]';
         }

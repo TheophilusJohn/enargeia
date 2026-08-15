@@ -54,6 +54,29 @@ export const CONFIG: ModelConfig = {
 export const MAX_CONTEXT = 2048;
 
 /**
+ * Longest single reply.
+ *
+ * A 0.5B model does not reliably emit `<|im_end|>`: measured over 24 generations on the chat
+ * template, 19 stopped on it and **5 ran to this cap**. The cap is what keeps a runaway from
+ * eating the whole context, and when it is what ended a reply the chat says so rather than
+ * presenting a truncated answer as a finished one.
+ */
+export const MAX_REPLY_TOKENS = 512;
+
+/**
+ * `?maxReply=8` to force replies to hit the cap, and `?maxTurns=2` to force the trim.
+ *
+ * Both surfaces are otherwise only reachable by chance — ten turns through the real UI produced
+ * neither — and a notice nobody has seen render is a notice that has not been shown to work.
+ * Same family as `?clampStorage` and `?forceSoftware`.
+ */
+function devOverride(name: string, fallback: number): number {
+  if (typeof location === 'undefined') return fallback;
+  const value = Number(new URLSearchParams(location.search).get(name));
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+/**
  * Download and compilation are reported separately because they are different waits with
  * different failure modes, and collapsing them into one bar makes the second phase look like
  * a hang. Compilation is short — 17 pipelines in 4–13 ms, measured — but the phase label is
@@ -87,6 +110,8 @@ export interface ChatTurn {
 export interface GenerateHandle {
   onToken: (text: string, tokenCount: number) => void;
   onDone: (stopped: 'eos' | 'limit' | 'cancelled' | 'error', message?: string) => void;
+  /** Oldest exchanges were dropped to make the conversation fit the context. */
+  onTrimmed?: (dropped: number) => void;
 }
 
 export class UnsupportedError extends Error {
@@ -107,8 +132,12 @@ export class Engine {
   private cancelled = false;
 
   profile: DeviceProfile | null = null;
-  /** Resolved from the device at load time; see {@link contextFor}. */
+  /** Resolved from the device at load time. */
   maxContext = MAX_CONTEXT;
+  /** Longest reply, after any dev override — the chat quotes it in the truncation notice. */
+  get replyCap(): number {
+    return devOverride('maxReply', MAX_REPLY_TOKENS);
+  }
   /** Bytes of weights resident on the GPU, for the memory ledger. */
   weightBytes = 0;
   /** Compile time and load time, reported on the ready panel rather than thrown away. */
@@ -300,12 +329,32 @@ export class Engine {
     if (!session || !tok) throw new Error('engine not loaded');
 
     this.cancelled = false;
-    const prompt = this.renderPrompt(turns);
-    const budget = this.maxContext - prompt.length - 8;
-    if (budget <= 0) {
-      handle.onDone('error', `The conversation no longer fits in a ${this.maxContext}-token context.`);
+
+    // Drop the oldest exchanges until the prompt fits, keeping room to answer.
+    //
+    // Refusing instead — which is what this did — dead-ends the conversation permanently: once
+    // a few verbose replies fill 2048 tokens, every later message fails and there is nothing
+    // the visitor can do about it. Measured: four turns of a rambling model was enough.
+    // `?maxTurns` shrinks the window rather than the context, which forces the trim path
+    // without pretending the device has less memory than it does.
+    const windowLimit = devOverride('maxTurns', Number.POSITIVE_INFINITY);
+    const RESERVE = 256;
+    let kept = [...turns];
+    let prompt = this.renderPrompt(kept);
+    let dropped = 0;
+    while ((prompt.length + RESERVE > this.maxContext || kept.length > windowLimit) && kept.length > 1) {
+      // Two at a time so a user turn never keeps an orphaned assistant reply before it.
+      kept = kept.slice(kept.length >= 3 ? 2 : 1);
+      dropped++;
+      prompt = this.renderPrompt(kept);
+    }
+    if (prompt.length + 8 > this.maxContext) {
+      handle.onDone('error', `That message alone exceeds the ${this.maxContext}-token context.`);
       return;
     }
+    if (dropped > 0) handle.onTrimmed?.(dropped);
+
+    const budget = this.maxContext - prompt.length - 8;
 
     const imEnd = tok.idForToken('<|im_end|>');
     const endOfText = tok.idForToken('<|endoftext|>');
@@ -319,7 +368,7 @@ export class Engine {
     try {
       const result = await session.generate({
         prompt,
-        maxTokens: Math.min(budget, 512),
+        maxTokens: Math.min(budget, devOverride('maxReply', MAX_REPLY_TOKENS)),
         stopTokens: stop,
         shouldStop: () => this.cancelled,
         onToken: (id) => {

@@ -18,6 +18,8 @@ import { ForwardGraph, type ModelConfig } from '../../src/model/graph.ts';
 import { Generator } from '../../src/runtime/generate.ts';
 import { Session } from '../../src/runtime/session.ts';
 import { GREEDY } from '../../src/kernels/sample.ts';
+import { Tokenizer, type TokenizerJSON } from '../../src/tokenizer/tokenizer.ts';
+import tokenizerJson from '../fixtures/tokenizer.json';
 
 const MODEL_URL = '/models/qwen2.5-0.5b.enargeia';
 const MAX_CONTEXT = 256;
@@ -185,6 +187,57 @@ describe('chunked prefill', () => {
     console.log(`[session] ragged chunks of 37:  ${JSON.stringify(ragged)}`);
     expect(chunked).toEqual(oneShot);
     expect(ragged).toEqual(oneShot);
+  }, 900_000);
+});
+
+describe('stopping at the end of a turn', () => {
+  // Every other test here generates a fixed count, so none of them has ever exercised early
+  // termination: a session that ignored its stop tokens entirely would pass all of them.
+  //
+  // The assertion is deliberately two-sided. Generating fewer tokens than the cap only shows
+  // that *something* ended it — the cache could have filled, or `shouldStop` fired. The last id
+  // being the stop token is what shows it ended for the right reason.
+  it('halts on <|im_end|> rather than running to maxTokens', async () => {
+    const tokenizer = Tokenizer.fromJSON(tokenizerJson as unknown as TokenizerJSON);
+    const imEnd = tokenizer.idForToken('<|im_end|>');
+    const endOfText = tokenizer.idForToken('<|endoftext|>');
+    expect(imEnd).toBe(151645);
+    expect(endOfText).toBe(151643);
+
+    // Qwen's chat template. Without it the model has no reason to emit a turn terminator.
+    const chat = tokenizer.encode(
+      '<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n' +
+        '<|im_start|>user\nWhat is the capital of France? Answer in one short sentence.<|im_end|>\n' +
+        '<|im_start|>assistant\n',
+    );
+
+    const session = new Session(ctx.device, ctx.queue, pool, pipelines, weights, config, {
+      maxContext: MAX_CONTEXT,
+      sampling: GREEDY,
+    });
+    try {
+      const cap = 200;
+      const result = await session.generate({
+        prompt: chat,
+        maxTokens: cap,
+        stopTokens: [imEnd!, endOfText!],
+      });
+      const last = result.tokens[result.tokens.length - 1];
+      console.log(
+        `[session] stopped after ${result.tokens.length}/${cap} tokens, last id ${last} ` +
+          `(${tokenizer.tokenForId(last)}) — ` +
+          JSON.stringify(tokenizer.decode(result.tokens, { skipSpecialTokens: true })),
+      );
+
+      expect(result.tokens.length).toBeLessThan(cap);
+      expect([imEnd, endOfText]).toContain(last);
+      // And the terminator is the only one: nothing decoded past it.
+      const inner = result.tokens.slice(0, -1);
+      expect(inner).not.toContain(imEnd);
+      expect(inner).not.toContain(endOfText);
+    } finally {
+      session.destroy();
+    }
   }, 900_000);
 });
 

@@ -792,3 +792,15 @@ footer {
 .readout .big.degraded {
   color: var(--k1);
 }
+
+/* Engine commentary in the transcript — a truncated reply, a trimmed conversation. Marked as
+ * the engine speaking so it is never mistaken for model output. */
+.turn.note-turn .who {
+  color: var(--k1);
+}
+.turn.note-turn .body {
+  color: var(--k1);
+  font-size: 13px;
+  border-left: 2px solid color-mix(in srgb, var(--k1) 40%, transparent);
+  padding-left: 10px;
+}

@@ -1031,3 +1031,18 @@ Injected with `?forceSoftware`, following `?clampStorage`. Both directions are v
 end because Chromium and WebKit disagreed on this machine — Chromium on SwiftShader, WebKit on
 the Apple GPU — which gave the check a genuine negative case and, incidentally, identified the
 fallback as Chromium's rather than the system's.
+
+### 86. A reply that hit the cap says so; a conversation that outgrows the context is trimmed
+
+**Chosen:** engine-voiced notices in the transcript for both, and dropping the oldest exchanges
+rather than refusing.
+**Rejected:** lowering the token cap, which trades one arbitrary truncation for another;
+a degeneracy detector, which is inventing policy about what the model meant.
+**Decided by:** measurement. 5 of 24 generations ran to the 512-token cap, because a 0.5B model
+does not reliably emit `<|im_end|>` — no engine change fixes that, so the surface has to be
+honest about it instead. And refusing on a full context dead-ends the chat permanently after
+about four verbose turns, which is a worse failure than losing the oldest exchange.
+
+The reported diagnosis — missing stop-token handling — was not the cause; stop handling works
+and 19 of 24 generations used it. Worth recording because the fix that followed from measuring
+is a different fix from the one the symptom suggested.

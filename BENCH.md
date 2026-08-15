@@ -1417,3 +1417,49 @@ says.
 `test/gpu/software.test.ts` covers what the end-to-end check cannot, because there is no healthy
 Chromium adapter to point at today: an Intel/Adreno/AMD adapter without f16 must not warn, and a
 fully redacted adapter that does have f16 must not warn either.
+
+## Where a reply ends
+
+Reported as missing stop-token handling. It is not missing, and measuring said so: the ids
+resolve (`<|im_end|>` 151645, `<|endoftext|>` 151643, both from `added_tokens` — the tokenizer's
+`idForToken` checks added tokens before the base vocabulary), `Session.generate` breaks on them,
+the stop token is kept out of the displayed text, and `phase` returns to idle. Driven through
+the real UI on the live site, replies stopped on `<|im_end|>` every time in the first sixteen
+attempts.
+
+**The bug is real and it is stochastic.** Over 24 generations on a growing conversation:
+
+| outcome | count |
+|---|---|
+| stopped on `<|im_end|>` | 19 |
+| **ran to the 512-token cap** | **5** |
+
+A 0.5B model does not reliably emit a turn terminator. Sixteen samples were not enough to see
+it; twenty-four were. Nothing is wrong with the stop handling — the model sometimes never sends
+the stop token, and there is no engine change that can make it.
+
+The repetition penalty was suspected of suppressing the terminator, since `<|im_end|>` appears
+in the prompt three times and the penalty history covers the prompt. **It is not.** The penalty
+does reach the sampler in the chat path — `this.tokens` is written to the history buffer with
+`historyLength = tokens.length` before every step — and generations at penalty 1.0, 1.1 and
+greedy all stopped on the terminator.
+
+Two defects that the stress run did expose, both invisible until a conversation ran long:
+
+- **A reply cut off at the cap looked exactly like a finished one.** `onDone('limit')` rendered
+  nothing, so a runaway read as a complete answer that stopped mid-sentence. The chat now says
+  so in its own voice, marked as the engine speaking rather than the model.
+- **The conversation dead-ended once it outgrew the context.** Four verbose turns were enough:
+  the prompt exceeded 2048 tokens, and from then on *every* message failed with "the
+  conversation no longer fits" and there was nothing the visitor could do. It now drops the
+  oldest exchanges to fit and says how many. In the same 24-generation run, the three turns that
+  previously failed with no output now generate.
+
+Both notices are only reachable by chance — ten turns through the real UI produced neither — so
+`?maxReply=` and `?maxTurns=` force them, in the same family as `?clampStorage` and
+`?forceSoftware`. Verified rendering on the live site.
+
+`test/parity/session.test.ts` now asserts early termination: fewer tokens than the cap, the last
+id is the stop token, and no stop token appears before it. Every other test in that file
+generates a fixed count, so a session that ignored its stop tokens entirely would have passed
+all of them. It stops after 8 tokens of 200 — "The capital of France is Paris."
