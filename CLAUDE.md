@@ -67,8 +67,12 @@ Consult these before working in their area. They are in `.claude/skills/`.
 
 ## Stack
 
-Vite, TypeScript strict, no framework in the engine. Vitest for tests. Python with
-PyTorch and safetensors for `tools/`. Cloudflare Pages deploys `main` automatically.
+Vite, TypeScript strict, no framework in the engine. Python with PyTorch and safetensors
+for `tools/`. Cloudflare Pages deploys `main` automatically.
+
+Tests are Vitest in **browser mode** (Playwright, Chromium) — `npm test`. Node has no
+WebGPU, so a kernel test outside a browser would only be testing a mock. `npm run bench`
+serves `bench.html`, which gates on the CPU reference before it reports a number.
 
 ## Target model
 

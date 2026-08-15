@@ -126,6 +126,35 @@ and keeping the memory pipeline saturated.
 A kernel tuned for one will underperform on the other. Keep them separate and name them
 `_prefill` and `_decode` rather than adding a branch.
 
+## Before optimizing: confirm the mechanism
+
+Vary the suspected cause independently and check that the effect moves. If you think a cost is
+bandwidth, halve the bytes and confirm the time drops. If you think it is iteration count,
+unroll and confirm. If you think it is occupancy, change the dispatch and confirm. Do this
+*before* building the optimization, not after it disappoints.
+
+A term measured correctly does not tell you what the term is. Time that scales with context
+could be bytes, iterations, or occupancy; time that scales with size could be arithmetic or
+launch overhead. These look identical in the measurement that motivated the work and differ
+completely in what fixes them.
+
+**This check has caught three wrong mechanism assumptions in this codebase:**
+
+- **the M5 footprint claim** — int4 prefill was reported slower than fp32 below ~500 tokens and
+  blamed on the tile footprint. Both had been measured through the same over-dispatched
+  attention. Sizing dispatch to the real sequence made int4 4.4× *faster* at the length where
+  it supposedly lost.
+- **the over-dispatch diagnosis** — geometry baked from `maxSeq` launched 5.5M workgroups per
+  prefill at any prompt length. Found only because a 32-token prompt taking 1518 ms did not fit
+  any story about the kernel, and the geometry was checked rather than assumed.
+- **the f16 cache prediction** — decode time decomposed cleanly into a fixed term plus 5.87
+  µs/position, and the position term was assumed to be KV bandwidth. Halving the bytes returned
+  a sixth of the predicted gain. It was iterations and occupancy; the real fix was a workgroup
+  reduction, worth +50% where f16 was worth +3%.
+
+Each time the wrong mechanism was plausible, consistent with the data in hand, and would have
+been caught in minutes by changing the suspected cause and watching the effect.
+
 ## Debugging
 
 There is no printf. To inspect intermediate values, bind a scratch `read_write` buffer,

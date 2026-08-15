@@ -1,0 +1,5477 @@
+{
+  "generator": "tools/dump_reference.py",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "torch": "2.13.0",
+  "prompt": "<|im_start|>user\nWhat is the capital of France?<|im_end|>\n<|im_start|>assistant\n",
+  "promptTokens": [
+    151644,
+    872,
+    198,
+    3838,
+    374,
+    279,
+    6722,
+    315,
+    9625,
+    30,
+    151645,
+    198,
+    151644,
+    77091,
+    198
+  ],
+  "seq": 15,
+  "config": {
+    "layers": 24,
+    "hidden": 896,
+    "heads": 14,
+    "kvHeads": 2,
+    "headDim": 64,
+    "intermediate": 4864,
+    "vocab": 151936,
+    "rmsNormEps": 1e-06,
+    "ropeTheta": 1000000.0,
+    "tieWordEmbeddings": true
+  },
+  "greedy": [
+    785,
+    6722,
+    315,
+    9625,
+    374,
+    12095,
+    13,
+    151645,
+    198,
+    151643,
+    33975,
+    22977,
+    614,
+    1012,
+    5382,
+    304,
+    279,
+    3639,
+    4180,
+    369
+  ],
+  "greedyText": "The capital of France is Paris.<|im_end|>\n<|endoftext|>Human beings have been living in the United States for",
+  "byteLength": 43993920,
+  "tensors": [
+    {
+      "name": "embeddings",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 0,
+      "byteLength": 53760,
+      "layer": null,
+      "stage": "embeddings"
+    },
+    {
+      "name": "layer0.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 53760,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "input"
+    },
+    {
+      "name": "layer0.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 107520,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer0.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 161280,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "q"
+    },
+    {
+      "name": "layer0.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 215040,
+      "byteLength": 7680,
+      "layer": 0,
+      "stage": "k"
+    },
+    {
+      "name": "layer0.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 222720,
+      "byteLength": 7680,
+      "layer": 0,
+      "stage": "v"
+    },
+    {
+      "name": "layer0.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 230400,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer0.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 284160,
+      "byteLength": 7680,
+      "layer": 0,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer0.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 291840,
+      "byteLength": 12600,
+      "layer": 0,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer0.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 304440,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer0.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 358200,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer0.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 411960,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer0.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 465720,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer0.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 519480,
+      "byteLength": 291840,
+      "layer": 0,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer0.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 811320,
+      "byteLength": 291840,
+      "layer": 0,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer0.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 1103160,
+      "byteLength": 291840,
+      "layer": 0,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer0.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1395000,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer0.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1448760,
+      "byteLength": 53760,
+      "layer": 0,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer1.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1502520,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "input"
+    },
+    {
+      "name": "layer1.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1556280,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer1.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1610040,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "q"
+    },
+    {
+      "name": "layer1.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 1663800,
+      "byteLength": 7680,
+      "layer": 1,
+      "stage": "k"
+    },
+    {
+      "name": "layer1.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 1671480,
+      "byteLength": 7680,
+      "layer": 1,
+      "stage": "v"
+    },
+    {
+      "name": "layer1.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 1679160,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer1.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 1732920,
+      "byteLength": 7680,
+      "layer": 1,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer1.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 1740600,
+      "byteLength": 12600,
+      "layer": 1,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer1.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1753200,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer1.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1806960,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer1.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1860720,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer1.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 1914480,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer1.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 1968240,
+      "byteLength": 291840,
+      "layer": 1,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer1.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 2260080,
+      "byteLength": 291840,
+      "layer": 1,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer1.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 2551920,
+      "byteLength": 291840,
+      "layer": 1,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer1.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 2843760,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer1.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 2897520,
+      "byteLength": 53760,
+      "layer": 1,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer2.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 2951280,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "input"
+    },
+    {
+      "name": "layer2.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3005040,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer2.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3058800,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "q"
+    },
+    {
+      "name": "layer2.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 3112560,
+      "byteLength": 7680,
+      "layer": 2,
+      "stage": "k"
+    },
+    {
+      "name": "layer2.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 3120240,
+      "byteLength": 7680,
+      "layer": 2,
+      "stage": "v"
+    },
+    {
+      "name": "layer2.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 3127920,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer2.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 3181680,
+      "byteLength": 7680,
+      "layer": 2,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer2.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 3189360,
+      "byteLength": 12600,
+      "layer": 2,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer2.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3201960,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer2.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3255720,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer2.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3309480,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer2.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 3363240,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer2.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 3417000,
+      "byteLength": 291840,
+      "layer": 2,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer2.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 3708840,
+      "byteLength": 291840,
+      "layer": 2,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer2.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 4000680,
+      "byteLength": 291840,
+      "layer": 2,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer2.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4292520,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer2.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4346280,
+      "byteLength": 53760,
+      "layer": 2,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer3.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4400040,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "input"
+    },
+    {
+      "name": "layer3.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4453800,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer3.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4507560,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "q"
+    },
+    {
+      "name": "layer3.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 4561320,
+      "byteLength": 7680,
+      "layer": 3,
+      "stage": "k"
+    },
+    {
+      "name": "layer3.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 4569000,
+      "byteLength": 7680,
+      "layer": 3,
+      "stage": "v"
+    },
+    {
+      "name": "layer3.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 4576680,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer3.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 4630440,
+      "byteLength": 7680,
+      "layer": 3,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer3.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 4638120,
+      "byteLength": 12600,
+      "layer": 3,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer3.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4650720,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer3.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4704480,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer3.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4758240,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer3.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 4812000,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer3.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 4865760,
+      "byteLength": 291840,
+      "layer": 3,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer3.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 5157600,
+      "byteLength": 291840,
+      "layer": 3,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer3.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 5449440,
+      "byteLength": 291840,
+      "layer": 3,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer3.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 5741280,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer3.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 5795040,
+      "byteLength": 53760,
+      "layer": 3,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer4.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 5848800,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "input"
+    },
+    {
+      "name": "layer4.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 5902560,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer4.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 5956320,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "q"
+    },
+    {
+      "name": "layer4.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 6010080,
+      "byteLength": 7680,
+      "layer": 4,
+      "stage": "k"
+    },
+    {
+      "name": "layer4.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 6017760,
+      "byteLength": 7680,
+      "layer": 4,
+      "stage": "v"
+    },
+    {
+      "name": "layer4.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 6025440,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer4.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 6079200,
+      "byteLength": 7680,
+      "layer": 4,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer4.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 6086880,
+      "byteLength": 12600,
+      "layer": 4,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer4.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 6099480,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer4.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 6153240,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer4.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 6207000,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer4.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 6260760,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer4.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 6314520,
+      "byteLength": 291840,
+      "layer": 4,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer4.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 6606360,
+      "byteLength": 291840,
+      "layer": 4,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer4.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 6898200,
+      "byteLength": 291840,
+      "layer": 4,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer4.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7190040,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer4.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7243800,
+      "byteLength": 53760,
+      "layer": 4,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer5.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7297560,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "input"
+    },
+    {
+      "name": "layer5.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7351320,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer5.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7405080,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "q"
+    },
+    {
+      "name": "layer5.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 7458840,
+      "byteLength": 7680,
+      "layer": 5,
+      "stage": "k"
+    },
+    {
+      "name": "layer5.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 7466520,
+      "byteLength": 7680,
+      "layer": 5,
+      "stage": "v"
+    },
+    {
+      "name": "layer5.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 7474200,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer5.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 7527960,
+      "byteLength": 7680,
+      "layer": 5,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer5.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 7535640,
+      "byteLength": 12600,
+      "layer": 5,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer5.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7548240,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer5.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7602000,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer5.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7655760,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer5.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 7709520,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer5.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 7763280,
+      "byteLength": 291840,
+      "layer": 5,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer5.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 8055120,
+      "byteLength": 291840,
+      "layer": 5,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer5.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 8346960,
+      "byteLength": 291840,
+      "layer": 5,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer5.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8638800,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer5.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8692560,
+      "byteLength": 53760,
+      "layer": 5,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer6.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8746320,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "input"
+    },
+    {
+      "name": "layer6.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8800080,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer6.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8853840,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "q"
+    },
+    {
+      "name": "layer6.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 8907600,
+      "byteLength": 7680,
+      "layer": 6,
+      "stage": "k"
+    },
+    {
+      "name": "layer6.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 8915280,
+      "byteLength": 7680,
+      "layer": 6,
+      "stage": "v"
+    },
+    {
+      "name": "layer6.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 8922960,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer6.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 8976720,
+      "byteLength": 7680,
+      "layer": 6,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer6.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 8984400,
+      "byteLength": 12600,
+      "layer": 6,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer6.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 8997000,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer6.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 9050760,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer6.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 9104520,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer6.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 9158280,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer6.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 9212040,
+      "byteLength": 291840,
+      "layer": 6,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer6.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 9503880,
+      "byteLength": 291840,
+      "layer": 6,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer6.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 9795720,
+      "byteLength": 291840,
+      "layer": 6,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer6.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10087560,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer6.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10141320,
+      "byteLength": 53760,
+      "layer": 6,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer7.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10195080,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "input"
+    },
+    {
+      "name": "layer7.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10248840,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer7.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10302600,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "q"
+    },
+    {
+      "name": "layer7.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 10356360,
+      "byteLength": 7680,
+      "layer": 7,
+      "stage": "k"
+    },
+    {
+      "name": "layer7.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 10364040,
+      "byteLength": 7680,
+      "layer": 7,
+      "stage": "v"
+    },
+    {
+      "name": "layer7.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 10371720,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer7.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 10425480,
+      "byteLength": 7680,
+      "layer": 7,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer7.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 10433160,
+      "byteLength": 12600,
+      "layer": 7,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer7.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10445760,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer7.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10499520,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer7.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10553280,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer7.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 10607040,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer7.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 10660800,
+      "byteLength": 291840,
+      "layer": 7,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer7.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 10952640,
+      "byteLength": 291840,
+      "layer": 7,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer7.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 11244480,
+      "byteLength": 291840,
+      "layer": 7,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer7.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11536320,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer7.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11590080,
+      "byteLength": 53760,
+      "layer": 7,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer8.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11643840,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "input"
+    },
+    {
+      "name": "layer8.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11697600,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer8.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11751360,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "q"
+    },
+    {
+      "name": "layer8.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 11805120,
+      "byteLength": 7680,
+      "layer": 8,
+      "stage": "k"
+    },
+    {
+      "name": "layer8.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 11812800,
+      "byteLength": 7680,
+      "layer": 8,
+      "stage": "v"
+    },
+    {
+      "name": "layer8.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 11820480,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer8.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 11874240,
+      "byteLength": 7680,
+      "layer": 8,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer8.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 11881920,
+      "byteLength": 12600,
+      "layer": 8,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer8.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11894520,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer8.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 11948280,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer8.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 12002040,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer8.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 12055800,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer8.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 12109560,
+      "byteLength": 291840,
+      "layer": 8,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer8.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 12401400,
+      "byteLength": 291840,
+      "layer": 8,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer8.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 12693240,
+      "byteLength": 291840,
+      "layer": 8,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer8.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 12985080,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer8.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13038840,
+      "byteLength": 53760,
+      "layer": 8,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer9.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13092600,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "input"
+    },
+    {
+      "name": "layer9.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13146360,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer9.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13200120,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "q"
+    },
+    {
+      "name": "layer9.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 13253880,
+      "byteLength": 7680,
+      "layer": 9,
+      "stage": "k"
+    },
+    {
+      "name": "layer9.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 13261560,
+      "byteLength": 7680,
+      "layer": 9,
+      "stage": "v"
+    },
+    {
+      "name": "layer9.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 13269240,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer9.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 13323000,
+      "byteLength": 7680,
+      "layer": 9,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer9.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 13330680,
+      "byteLength": 12600,
+      "layer": 9,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer9.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13343280,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer9.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13397040,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer9.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13450800,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer9.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 13504560,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer9.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 13558320,
+      "byteLength": 291840,
+      "layer": 9,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer9.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 13850160,
+      "byteLength": 291840,
+      "layer": 9,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer9.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 14142000,
+      "byteLength": 291840,
+      "layer": 9,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer9.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14433840,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer9.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14487600,
+      "byteLength": 53760,
+      "layer": 9,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer10.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14541360,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "input"
+    },
+    {
+      "name": "layer10.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14595120,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer10.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14648880,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "q"
+    },
+    {
+      "name": "layer10.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 14702640,
+      "byteLength": 7680,
+      "layer": 10,
+      "stage": "k"
+    },
+    {
+      "name": "layer10.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 14710320,
+      "byteLength": 7680,
+      "layer": 10,
+      "stage": "v"
+    },
+    {
+      "name": "layer10.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 14718000,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer10.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 14771760,
+      "byteLength": 7680,
+      "layer": 10,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer10.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 14779440,
+      "byteLength": 12600,
+      "layer": 10,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer10.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14792040,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer10.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14845800,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer10.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14899560,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer10.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 14953320,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer10.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 15007080,
+      "byteLength": 291840,
+      "layer": 10,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer10.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 15298920,
+      "byteLength": 291840,
+      "layer": 10,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer10.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 15590760,
+      "byteLength": 291840,
+      "layer": 10,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer10.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 15882600,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer10.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 15936360,
+      "byteLength": 53760,
+      "layer": 10,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer11.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 15990120,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "input"
+    },
+    {
+      "name": "layer11.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16043880,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer11.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16097640,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "q"
+    },
+    {
+      "name": "layer11.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 16151400,
+      "byteLength": 7680,
+      "layer": 11,
+      "stage": "k"
+    },
+    {
+      "name": "layer11.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 16159080,
+      "byteLength": 7680,
+      "layer": 11,
+      "stage": "v"
+    },
+    {
+      "name": "layer11.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 16166760,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer11.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 16220520,
+      "byteLength": 7680,
+      "layer": 11,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer11.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 16228200,
+      "byteLength": 12600,
+      "layer": 11,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer11.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16240800,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer11.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16294560,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer11.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16348320,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer11.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 16402080,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer11.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 16455840,
+      "byteLength": 291840,
+      "layer": 11,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer11.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 16747680,
+      "byteLength": 291840,
+      "layer": 11,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer11.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 17039520,
+      "byteLength": 291840,
+      "layer": 11,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer11.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17331360,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer11.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17385120,
+      "byteLength": 53760,
+      "layer": 11,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer12.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17438880,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "input"
+    },
+    {
+      "name": "layer12.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17492640,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer12.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17546400,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "q"
+    },
+    {
+      "name": "layer12.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 17600160,
+      "byteLength": 7680,
+      "layer": 12,
+      "stage": "k"
+    },
+    {
+      "name": "layer12.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 17607840,
+      "byteLength": 7680,
+      "layer": 12,
+      "stage": "v"
+    },
+    {
+      "name": "layer12.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 17615520,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer12.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 17669280,
+      "byteLength": 7680,
+      "layer": 12,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer12.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 17676960,
+      "byteLength": 12600,
+      "layer": 12,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer12.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17689560,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer12.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17743320,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer12.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17797080,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer12.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 17850840,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer12.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 17904600,
+      "byteLength": 291840,
+      "layer": 12,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer12.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 18196440,
+      "byteLength": 291840,
+      "layer": 12,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer12.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 18488280,
+      "byteLength": 291840,
+      "layer": 12,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer12.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 18780120,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer12.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 18833880,
+      "byteLength": 53760,
+      "layer": 12,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer13.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 18887640,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "input"
+    },
+    {
+      "name": "layer13.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 18941400,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer13.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 18995160,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "q"
+    },
+    {
+      "name": "layer13.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 19048920,
+      "byteLength": 7680,
+      "layer": 13,
+      "stage": "k"
+    },
+    {
+      "name": "layer13.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 19056600,
+      "byteLength": 7680,
+      "layer": 13,
+      "stage": "v"
+    },
+    {
+      "name": "layer13.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 19064280,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer13.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 19118040,
+      "byteLength": 7680,
+      "layer": 13,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer13.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 19125720,
+      "byteLength": 12600,
+      "layer": 13,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer13.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 19138320,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer13.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 19192080,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer13.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 19245840,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer13.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 19299600,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer13.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 19353360,
+      "byteLength": 291840,
+      "layer": 13,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer13.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 19645200,
+      "byteLength": 291840,
+      "layer": 13,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer13.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 19937040,
+      "byteLength": 291840,
+      "layer": 13,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer13.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20228880,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer13.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20282640,
+      "byteLength": 53760,
+      "layer": 13,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer14.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20336400,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "input"
+    },
+    {
+      "name": "layer14.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20390160,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer14.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20443920,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "q"
+    },
+    {
+      "name": "layer14.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 20497680,
+      "byteLength": 7680,
+      "layer": 14,
+      "stage": "k"
+    },
+    {
+      "name": "layer14.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 20505360,
+      "byteLength": 7680,
+      "layer": 14,
+      "stage": "v"
+    },
+    {
+      "name": "layer14.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 20513040,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer14.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 20566800,
+      "byteLength": 7680,
+      "layer": 14,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer14.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 20574480,
+      "byteLength": 12600,
+      "layer": 14,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer14.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20587080,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer14.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20640840,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer14.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20694600,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer14.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 20748360,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer14.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 20802120,
+      "byteLength": 291840,
+      "layer": 14,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer14.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 21093960,
+      "byteLength": 291840,
+      "layer": 14,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer14.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 21385800,
+      "byteLength": 291840,
+      "layer": 14,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer14.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 21677640,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer14.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 21731400,
+      "byteLength": 53760,
+      "layer": 14,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer15.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 21785160,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "input"
+    },
+    {
+      "name": "layer15.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 21838920,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer15.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 21892680,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "q"
+    },
+    {
+      "name": "layer15.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 21946440,
+      "byteLength": 7680,
+      "layer": 15,
+      "stage": "k"
+    },
+    {
+      "name": "layer15.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 21954120,
+      "byteLength": 7680,
+      "layer": 15,
+      "stage": "v"
+    },
+    {
+      "name": "layer15.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 21961800,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer15.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 22015560,
+      "byteLength": 7680,
+      "layer": 15,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer15.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 22023240,
+      "byteLength": 12600,
+      "layer": 15,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer15.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 22035840,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer15.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 22089600,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer15.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 22143360,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer15.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 22197120,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer15.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 22250880,
+      "byteLength": 291840,
+      "layer": 15,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer15.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 22542720,
+      "byteLength": 291840,
+      "layer": 15,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer15.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 22834560,
+      "byteLength": 291840,
+      "layer": 15,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer15.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23126400,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer15.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23180160,
+      "byteLength": 53760,
+      "layer": 15,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer16.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23233920,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "input"
+    },
+    {
+      "name": "layer16.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23287680,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer16.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23341440,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "q"
+    },
+    {
+      "name": "layer16.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 23395200,
+      "byteLength": 7680,
+      "layer": 16,
+      "stage": "k"
+    },
+    {
+      "name": "layer16.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 23402880,
+      "byteLength": 7680,
+      "layer": 16,
+      "stage": "v"
+    },
+    {
+      "name": "layer16.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 23410560,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer16.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 23464320,
+      "byteLength": 7680,
+      "layer": 16,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer16.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 23472000,
+      "byteLength": 12600,
+      "layer": 16,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer16.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23484600,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer16.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23538360,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer16.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23592120,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer16.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 23645880,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer16.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 23699640,
+      "byteLength": 291840,
+      "layer": 16,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer16.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 23991480,
+      "byteLength": 291840,
+      "layer": 16,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer16.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 24283320,
+      "byteLength": 291840,
+      "layer": 16,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer16.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24575160,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer16.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24628920,
+      "byteLength": 53760,
+      "layer": 16,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer17.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24682680,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "input"
+    },
+    {
+      "name": "layer17.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24736440,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer17.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24790200,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "q"
+    },
+    {
+      "name": "layer17.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 24843960,
+      "byteLength": 7680,
+      "layer": 17,
+      "stage": "k"
+    },
+    {
+      "name": "layer17.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 24851640,
+      "byteLength": 7680,
+      "layer": 17,
+      "stage": "v"
+    },
+    {
+      "name": "layer17.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 24859320,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer17.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 24913080,
+      "byteLength": 7680,
+      "layer": 17,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer17.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 24920760,
+      "byteLength": 12600,
+      "layer": 17,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer17.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24933360,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer17.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 24987120,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer17.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 25040880,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer17.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 25094640,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer17.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 25148400,
+      "byteLength": 291840,
+      "layer": 17,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer17.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 25440240,
+      "byteLength": 291840,
+      "layer": 17,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer17.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 25732080,
+      "byteLength": 291840,
+      "layer": 17,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer17.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26023920,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer17.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26077680,
+      "byteLength": 53760,
+      "layer": 17,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer18.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26131440,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "input"
+    },
+    {
+      "name": "layer18.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26185200,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer18.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26238960,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "q"
+    },
+    {
+      "name": "layer18.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 26292720,
+      "byteLength": 7680,
+      "layer": 18,
+      "stage": "k"
+    },
+    {
+      "name": "layer18.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 26300400,
+      "byteLength": 7680,
+      "layer": 18,
+      "stage": "v"
+    },
+    {
+      "name": "layer18.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 26308080,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer18.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 26361840,
+      "byteLength": 7680,
+      "layer": 18,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer18.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 26369520,
+      "byteLength": 12600,
+      "layer": 18,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer18.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26382120,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer18.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26435880,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer18.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26489640,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer18.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 26543400,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer18.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 26597160,
+      "byteLength": 291840,
+      "layer": 18,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer18.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 26889000,
+      "byteLength": 291840,
+      "layer": 18,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer18.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 27180840,
+      "byteLength": 291840,
+      "layer": 18,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer18.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27472680,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer18.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27526440,
+      "byteLength": 53760,
+      "layer": 18,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer19.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27580200,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "input"
+    },
+    {
+      "name": "layer19.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27633960,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer19.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27687720,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "q"
+    },
+    {
+      "name": "layer19.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 27741480,
+      "byteLength": 7680,
+      "layer": 19,
+      "stage": "k"
+    },
+    {
+      "name": "layer19.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 27749160,
+      "byteLength": 7680,
+      "layer": 19,
+      "stage": "v"
+    },
+    {
+      "name": "layer19.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 27756840,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer19.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 27810600,
+      "byteLength": 7680,
+      "layer": 19,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer19.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 27818280,
+      "byteLength": 12600,
+      "layer": 19,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer19.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27830880,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer19.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27884640,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer19.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27938400,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer19.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 27992160,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer19.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 28045920,
+      "byteLength": 291840,
+      "layer": 19,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer19.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 28337760,
+      "byteLength": 291840,
+      "layer": 19,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer19.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 28629600,
+      "byteLength": 291840,
+      "layer": 19,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer19.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 28921440,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer19.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 28975200,
+      "byteLength": 53760,
+      "layer": 19,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer20.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29028960,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "input"
+    },
+    {
+      "name": "layer20.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29082720,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer20.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29136480,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "q"
+    },
+    {
+      "name": "layer20.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 29190240,
+      "byteLength": 7680,
+      "layer": 20,
+      "stage": "k"
+    },
+    {
+      "name": "layer20.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 29197920,
+      "byteLength": 7680,
+      "layer": 20,
+      "stage": "v"
+    },
+    {
+      "name": "layer20.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 29205600,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer20.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 29259360,
+      "byteLength": 7680,
+      "layer": 20,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer20.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 29267040,
+      "byteLength": 12600,
+      "layer": 20,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer20.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29279640,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer20.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29333400,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer20.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29387160,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer20.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 29440920,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer20.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 29494680,
+      "byteLength": 291840,
+      "layer": 20,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer20.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 29786520,
+      "byteLength": 291840,
+      "layer": 20,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer20.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 30078360,
+      "byteLength": 291840,
+      "layer": 20,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer20.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30370200,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer20.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30423960,
+      "byteLength": 53760,
+      "layer": 20,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer21.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30477720,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "input"
+    },
+    {
+      "name": "layer21.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30531480,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer21.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30585240,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "q"
+    },
+    {
+      "name": "layer21.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 30639000,
+      "byteLength": 7680,
+      "layer": 21,
+      "stage": "k"
+    },
+    {
+      "name": "layer21.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 30646680,
+      "byteLength": 7680,
+      "layer": 21,
+      "stage": "v"
+    },
+    {
+      "name": "layer21.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 30654360,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer21.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 30708120,
+      "byteLength": 7680,
+      "layer": 21,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer21.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 30715800,
+      "byteLength": 12600,
+      "layer": 21,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer21.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30728400,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer21.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30782160,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer21.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30835920,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer21.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 30889680,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer21.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 30943440,
+      "byteLength": 291840,
+      "layer": 21,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer21.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 31235280,
+      "byteLength": 291840,
+      "layer": 21,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer21.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 31527120,
+      "byteLength": 291840,
+      "layer": 21,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer21.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 31818960,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer21.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 31872720,
+      "byteLength": 53760,
+      "layer": 21,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer22.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 31926480,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "input"
+    },
+    {
+      "name": "layer22.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 31980240,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer22.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 32034000,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "q"
+    },
+    {
+      "name": "layer22.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 32087760,
+      "byteLength": 7680,
+      "layer": 22,
+      "stage": "k"
+    },
+    {
+      "name": "layer22.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 32095440,
+      "byteLength": 7680,
+      "layer": 22,
+      "stage": "v"
+    },
+    {
+      "name": "layer22.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 32103120,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer22.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 32156880,
+      "byteLength": 7680,
+      "layer": 22,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer22.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 32164560,
+      "byteLength": 12600,
+      "layer": 22,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer22.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 32177160,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer22.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 32230920,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer22.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 32284680,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer22.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 32338440,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer22.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 32392200,
+      "byteLength": 291840,
+      "layer": 22,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer22.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 32684040,
+      "byteLength": 291840,
+      "layer": 22,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer22.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 32975880,
+      "byteLength": 291840,
+      "layer": 22,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer22.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33267720,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer22.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33321480,
+      "byteLength": 53760,
+      "layer": 22,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "layer23.input",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33375240,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "input"
+    },
+    {
+      "name": "layer23.post_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33429000,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "post_rmsnorm"
+    },
+    {
+      "name": "layer23.q",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33482760,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "q"
+    },
+    {
+      "name": "layer23.k",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 33536520,
+      "byteLength": 7680,
+      "layer": 23,
+      "stage": "k"
+    },
+    {
+      "name": "layer23.v",
+      "shape": [
+        1,
+        15,
+        128
+      ],
+      "dtype": "F32",
+      "offset": 33544200,
+      "byteLength": 7680,
+      "layer": 23,
+      "stage": "v"
+    },
+    {
+      "name": "layer23.q_rope",
+      "shape": [
+        1,
+        14,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 33551880,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "q_rope"
+    },
+    {
+      "name": "layer23.k_rope",
+      "shape": [
+        1,
+        2,
+        15,
+        64
+      ],
+      "dtype": "F32",
+      "offset": 33605640,
+      "byteLength": 7680,
+      "layer": 23,
+      "stage": "k_rope"
+    },
+    {
+      "name": "layer23.attn_weights",
+      "shape": [
+        1,
+        14,
+        15,
+        15
+      ],
+      "dtype": "F32",
+      "offset": 33613320,
+      "byteLength": 12600,
+      "layer": 23,
+      "stage": "attn_weights"
+    },
+    {
+      "name": "layer23.attn_out",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33625920,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "attn_out"
+    },
+    {
+      "name": "layer23.o_proj",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33679680,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "o_proj"
+    },
+    {
+      "name": "layer23.resid_attn",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33733440,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "resid_attn"
+    },
+    {
+      "name": "layer23.post_attn_rmsnorm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 33787200,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "post_attn_rmsnorm"
+    },
+    {
+      "name": "layer23.mlp_gate",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 33840960,
+      "byteLength": 291840,
+      "layer": 23,
+      "stage": "mlp_gate"
+    },
+    {
+      "name": "layer23.mlp_up",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 34132800,
+      "byteLength": 291840,
+      "layer": 23,
+      "stage": "mlp_up"
+    },
+    {
+      "name": "layer23.mlp_silu_mul",
+      "shape": [
+        1,
+        15,
+        4864
+      ],
+      "dtype": "F32",
+      "offset": 34424640,
+      "byteLength": 291840,
+      "layer": 23,
+      "stage": "mlp_silu_mul"
+    },
+    {
+      "name": "layer23.mlp_down",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 34716480,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "mlp_down"
+    },
+    {
+      "name": "layer23.resid_mlp",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 34770240,
+      "byteLength": 53760,
+      "layer": 23,
+      "stage": "resid_mlp"
+    },
+    {
+      "name": "final_norm",
+      "shape": [
+        1,
+        15,
+        896
+      ],
+      "dtype": "F32",
+      "offset": 34824000,
+      "byteLength": 53760,
+      "layer": null,
+      "stage": "final_norm"
+    },
+    {
+      "name": "logits",
+      "shape": [
+        1,
+        15,
+        151936
+      ],
+      "dtype": "F32",
+      "offset": 34877760,
+      "byteLength": 9116160,
+      "layer": null,
+      "stage": "logits"
+    }
+  ]
+}
