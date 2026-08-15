@@ -21,7 +21,8 @@
     "session": "node tools/session.mjs",
     "decode": "node tools/decode.mjs",
     "ablation": "node tools/ablation.mjs",
-    "speculate:estimate": "ENARGEIA_PARITY=1 npx vitest run test/parity/speculation_estimate.test.ts --reporter=verbose --testTimeout=1800000"
+    "speculate:estimate": "ENARGEIA_PARITY=1 npx vitest run test/parity/speculation_estimate.test.ts --reporter=verbose --testTimeout=1800000",
+    "residency": "node tools/residency.mjs"
   },
   "devDependencies": {
     "@types/three": "^0.185.4",

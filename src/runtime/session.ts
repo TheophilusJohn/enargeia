@@ -22,8 +22,17 @@ import { Rolling, kernelGroup, type KernelTiming, type Telemetry } from './telem
 import { readBuffer as readRaw } from '../gpu/readback.ts';
 import type { DeviceProfile } from '../gpu/device.ts';
 
+/**
+ * Tokens per prefill pass. 256 from the residency measurement: it takes the attention scratch
+ * from 448 MiB to 56 while predicting a *faster* prefill than one shot, and going lower buys
+ * little more memory while adding submits.
+ */
+export const DEFAULT_PREFILL_CHUNK = 256;
+
 export interface SessionOptions {
   maxContext: number;
+  /** Queries per prefill pass. Defaults to {@link DEFAULT_PREFILL_CHUNK}. */
+  prefillChunk?: number;
   /** Reported in telemetry so the UI can name the fallback path that engaged. */
   profile?: DeviceProfile;
   /**
@@ -90,6 +99,7 @@ export class Session {
   private readonly deviceProfile: DeviceProfile | undefined;
   private readonly rollingMs = new Rolling(16);
   private lastPublish = 0;
+  readonly prefillChunk: number = DEFAULT_PREFILL_CHUNK;
   private kernelTimings: KernelTiming[] = [];
   private gpuMsPerToken: number | null = null;
   private querySet: GPUQuerySet | null = null;
@@ -124,10 +134,19 @@ export class Session {
       dtype: options.cacheDType ?? (OPTIMIZATIONS.f16 ? 'f16' : 'f32'),
     });
 
-    // The prefill graph is sized to the maximum context because a prompt can be any length up
-    // to it; the decode graph is sized to one token and never changes shape.
+    // The prefill graph is sized to a *chunk*, not to the maximum context, and a long prompt
+    // runs through it in several passes.
+    //
+    // Sizing it to `maxContext` allocated the attention score tensors as
+    // heads x maxContext x maxContext — 224 MiB each at a 2048 context, 512 MiB of capacity for
+    // the pair, two thirds of all scratch. That is the same mistake as the M6 over-dispatch:
+    // sizing to a build-time maximum rather than to the extent actually in play. Chunking makes
+    // them heads x chunk x maxContext instead, and it is also slightly *faster*, because a
+    // chunk attends over the prefix it needs rather than a full square that is half masked.
+    this.prefillChunk = Math.min(options.prefillChunk ?? DEFAULT_PREFILL_CHUNK, options.maxContext);
     this.prefill = new ForwardGraph(
-      device, pool, pipelines, weights, config, options.maxContext, this.cache,
+      device, pool, pipelines, weights, config, this.prefillChunk, this.cache,
+      { keyCapacity: options.maxContext },
     );
     this.decode = new DecodeGraph(
       device, pool, pipelines, weights, config, this.cache, this.sampling,
@@ -311,12 +330,12 @@ export class Session {
       );
     }
     const started = performance.now();
-    this.queue.writeBuffer(this.prefill.tokenIds.buffer, 0, new Uint32Array(prompt));
-    this.prefill.setSequenceLength(prompt.length);
-
-    const encoder = this.device.createCommandEncoder({ label: 'prefill' });
-    this.prefill.encode(encoder, prompt.length);
-    this.queue.submit([encoder.finish()]);
+    this.prefill.encodeChunks(this.device, this.queue, prompt.length, (begin, count) => {
+      this.queue.writeBuffer(
+        this.prefill.tokenIds.buffer, 0,
+        new Uint32Array(prompt.slice(begin, begin + count)),
+      );
+    });
     await this.queue.onSubmittedWorkDone();
 
     this.cache.advance(prompt.length);

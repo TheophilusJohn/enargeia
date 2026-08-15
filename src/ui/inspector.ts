@@ -136,9 +136,10 @@ class MemoryPanel {
 
   constructor() {
     this.note.textContent =
-      'Scratch is dominated by the prefill graph, which is allocated once for the largest ' +
-      'prompt it must accept: two 14 × 2048 × 2048 attention buffers are 470 MiB of it. ' +
-      'Decoding needs almost none of that — it is the price of never allocating mid-generation.';
+      'Scratch is the prefill graph, allocated once and never grown. It is sized to a ' +
+      '256-token chunk rather than to the whole context: a long prompt runs through in ' +
+      'several passes, which took this from 773.8 MiB to 99.1 at no measurable cost in ' +
+      'prefill speed.';
     this.root = gauge('Memory', el('div', {}, [this.list, this.note]));
   }
 
@@ -153,7 +154,9 @@ class MemoryPanel {
       el('dd', { text: mib(m.scratchBytes) }),
       el('dt', { text: 'resident total' }),
       el('dd', { text: mib(m.totalBytes) }),
-      el('dt', { text: 'weights in fp32, for scale' }),
+      // The comparison is weights against weights. A live-against-weights comparison would
+      // flatter the quantization by counting a cache the fp32 build also needs.
+      el('dt', { text: 'these weights in fp32' }),
       el('dd', { text: '1884.6 MiB' }),
     );
   }
@@ -258,7 +261,7 @@ export function devicePanel(
   row('max storage binding', mib(profile.maxStorageBufferBindingSize));
   row('storage buffers / stage', String(profile.maxStorageBuffersPerShaderStage));
   row('max workgroups / dim', profile.maxComputeWorkgroupsPerDimension.toLocaleString());
-  row('context', `${maxContext} tokens`, maxContext < 2048 ? 'warn' : '');
+  row('context', `${maxContext} tokens`);
   row('embedding bindings', embeddingParts === 1 ? '1 (table fits whole)' : `${embeddingParts} (split)`,
     embeddingParts === 1 ? 'ok' : 'warn');
 
@@ -283,14 +286,6 @@ export function devicePanel(
         `${embeddingParts} buffers, with the gather and the tied LM head reading whichever part ` +
         'holds the row.',
   );
-  if (maxContext < 2048) {
-    fallbacks.push(
-      `Mobile-class adapter, so the context is ${maxContext} rather than 2048. Prefill ` +
-      'activations grow with the square of the context — the two attention buffers are ' +
-      '470 MiB at 2048 and 118 at 1024 — and that is the difference between running and ' +
-      'failing to allocate.',
-    );
-  }
   if (profile.storageBindingClamped) {
     fallbacks.push(
       `Binding size is clamped to 128 MiB for testing; the adapter would allow ` +

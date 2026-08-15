@@ -118,6 +118,22 @@ export class BufferPool {
     return entry;
   }
 
+  /**
+   * Every live allocation, largest first, with the label it was acquired under.
+   *
+   * `capacity` is what the GPU actually holds — the pool rounds to a power-of-two size class,
+   * so a 224 MiB request occupies 256. The difference is invisible in `stats().liveBytes` as a
+   * total and obvious here, which is the point of listing them.
+   */
+  describeLive(): Array<{ label: string; requested: number; capacity: number }> {
+    const rows = [...this.live].map((entry) => ({
+      label: (entry.buffer.label ?? 'scratch').replace(/^[^/]*\//, '').replace(/:\d+$/, ''),
+      requested: entry.size,
+      capacity: entry.capacity,
+    }));
+    return rows.sort((a, b) => b.capacity - a.capacity);
+  }
+
   /** Return a buffer for reuse. The caller must not touch it afterwards. */
   release(pooled: PooledBuffer): void {
     const entry = pooled as PoolEntry;

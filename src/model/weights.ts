@@ -33,6 +33,9 @@ import {
   type EnargeiaTensorInfo,
 } from './enargeia.ts';
 import {
+  DEFAULT_CONCURRENCY,
+  DEFAULT_SPAN_BYTES,
+  limiter,
   CachedChunkReader,
   ProgressTracker,
   WeightCache,
@@ -112,6 +115,12 @@ export interface LoadOptions {
   source: ByteSource;
   onProgress?: ProgressCallback;
   chunkBytes?: number;
+  /**
+   * Range requests in flight at once. The default is tuned for a CDN, not for loopback: every
+   * load number measured before the site was deployed came from a local dev server where a
+   * round trip was free, which hid the fact that this loader issued its requests one at a time.
+   */
+  concurrency?: number;
   /** Skip the Cache API entirely. For benchmarking cold loads repeatedly. */
   noCache?: boolean;
   /**
@@ -308,16 +317,74 @@ export class WeightStore {
     const quant = new Map<string, QuantTensor>();
     let fetched = 0;
 
-    /** Read one byte range and upload it verbatim. */
-    const upload = async (
+    // The `.enargeia` container stores three arrays per quantized tensor, so a 170-tensor model
+    // is ~630 byte ranges, and two of every three are small — a block of scales is kilobytes.
+    // Requested individually they are 630 round trips, and over a CDN the small ones dominate:
+    // 178 MB of large tensors arrived in the first 10 seconds and the remaining 173 took 44.
+    //
+    // So they are coalesced first. The ranges are contiguous by construction — the quantizer
+    // writes them in order — so sorting and merging up to a span limit turns 630 requests into
+    // about 22, and each tensor is sliced out of the span that contains it.
+    const cache = new WeightCache(options.ref);
+    const spanBytes = options.chunkBytes ?? DEFAULT_SPAN_BYTES;
+    const wanted: Array<{ begin: number; end: number }> = [...header.tensors.values()]
+      .flatMap((info) => ranges(info))
+      .map(([begin, end]) => ({
+        begin: header.dataOffset + begin,
+        end: header.dataOffset + end,
+      }))
+      .sort((a, b) => a.begin - b.begin);
+
+    const spans: Array<{ begin: number; end: number }> = [];
+    for (const range of wanted) {
+      const last = spans[spans.length - 1];
+      // Merge while the span stays under the limit. A gap between ranges is fetched too, which
+      // costs a few wasted bytes and saves a whole round trip; padding is negligible here
+      // because the container is 256-byte aligned with nothing between tensors.
+      if (last && range.end - last.begin <= spanBytes && range.begin >= last.begin) {
+        last.end = Math.max(last.end, range.end);
+      } else {
+        spans.push({ begin: range.begin, end: range.end });
+      }
+    }
+
+    if (!options.noCache) {
+      const cached = await cache.countCached(spans);
+      tracker.phase(cached === spans.length ? 'reading-cache' : 'downloading');
+    }
+    const reader = options.noCache
+      ? null
+      : new CachedChunkReader(options.source, cache, tracker);
+
+    const gate = limiter(options.concurrency ?? DEFAULT_CONCURRENCY);
+
+    /** Fetch every span, at most `concurrency` at once. Resolves to span index -> bytes. */
+    const fetchSpan = (span: { begin: number; end: number }): Promise<ArrayBuffer> =>
+      gate(async () => {
+        if (reader) {
+          return reader.read({ ...span, index: 0, byteLength: span.end - span.begin, tensors: [] });
+        }
+        const at = performance.now();
+        const bytes = await options.source.read(span.begin, span.end);
+        tracker.chunkFromNetwork(bytes.byteLength, performance.now() - at);
+        return bytes;
+      });
+
+    const spanBuffers = await Promise.all(spans.map(fetchSpan));
+    fetched = spans.length;
+
+    /** Slice one tensor's bytes out of whichever span holds it, and upload verbatim. */
+    const upload = (
       name: string,
       shape: number[],
       [begin, end]: readonly [number, number],
-    ): Promise<WeightTensor> => {
-      const at = performance.now();
-      const bytes = await options.source.read(header.dataOffset + begin, header.dataOffset + end);
-      tracker.chunkFromNetwork(bytes.byteLength, performance.now() - at);
-      fetched++;
+    ): WeightTensor => {
+      const from = header.dataOffset + begin;
+      const to = header.dataOffset + end;
+      const index = spans.findIndex((span) => from >= span.begin && to <= span.end);
+      if (index < 0) throw new Error(`no span covers ${name} (${from}-${to})`);
+      const span = spans[index];
+      const bytes = spanBuffers[index].slice(from - span.begin, to - span.begin);
       const tensor = createTensor(device, name, shape, bytes.byteLength);
       device.queue.writeBuffer(tensor.buffer, 0, bytes);
       return tensor;
@@ -335,9 +402,9 @@ export class WeightStore {
     for (const [name, info] of header.tensors) {
       if (isQuantized(info)) {
         const perWord = 32 / info.bits;
-        const packed = await upload(`${name}.packed`, [info.shape[0], info.shape[1] / perWord], info.packed);
-        const scales = await upload(`${name}.scales`, [info.totalBlocks], info.scales);
-        const zeros = await upload(`${name}.zeros`, [Math.ceil(info.totalBlocks / perWord)], info.zeros);
+        const packed = upload(`${name}.packed`, [info.shape[0], info.shape[1] / perWord], info.packed);
+        const scales = upload(`${name}.scales`, [info.totalBlocks], info.scales);
+        const zeros = upload(`${name}.zeros`, [Math.ceil(info.totalBlocks / perWord)], info.zeros);
         quant.set(name, {
           name,
           bits: info.bits,
@@ -354,13 +421,13 @@ export class WeightStore {
 
       // 1-D f32 tensors are norms and biases and belong in the plain map.
       if (info.dtype === 'F32' && info.shape.length === 1) {
-        tensors.set(name, await upload(name, info.shape, info.data));
+        tensors.set(name, upload(name, info.shape, info.data));
         continue;
       }
 
       // 2-D f16 or f32: the embedding at an exempted precision. Presented as a QuantTensor
       // with no scales so the graph selects a kernel on `bits` alone.
-      const data = await upload(`${name}.data`, info.shape, info.data);
+      const data = upload(`${name}.data`, info.shape, info.data);
       quant.set(name, {
         name,
         bits: info.dtype === 'F16' ? 16 : 32,

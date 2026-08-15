@@ -51,6 +51,39 @@ export interface LoadProgress {
 
 export type ProgressCallback = (progress: LoadProgress) => void;
 
+/**
+ * Range requests in flight at once.
+ *
+ * Eight because the win is round-trip latency, not bandwidth: 630 serial requests against a CDN
+ * spent 78 seconds mostly waiting. Higher than about eight stops helping — the connection is
+ * saturated by then — and each one in flight is a chunk held in memory before it reaches the
+ * GPU, so it is not free to raise.
+ */
+export const DEFAULT_CONCURRENCY = 8;
+
+/**
+ * Largest coalesced request. 16 MiB is a compromise: fewer, larger requests amortize the round
+ * trip, but a span is held whole in memory until its tensors are sliced out, and progress can
+ * only advance a span at a time.
+ */
+export const DEFAULT_SPAN_BYTES = 16 * 1024 * 1024;
+
+/** Run at most `limit` async tasks at once, preserving nothing about their order. */
+export function limiter(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let active = 0;
+  const waiting: Array<() => void> = [];
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    if (active >= limit) await new Promise<void>((resolve) => waiting.push(resolve));
+    active++;
+    try {
+      return await task();
+    } finally {
+      active--;
+      waiting.shift()?.();
+    }
+  };
+}
+
 function cacheName(ref: ModelRef): string {
   return `enargeia-${CACHE_VERSION}-${ref.modelId}@${ref.revision}`;
 }
@@ -238,9 +271,12 @@ export class ProgressTracker {
     etaSeconds: null,
   };
 
-  constructor(onProgress?: ProgressCallback, now = performance.now()) {
+  private readonly clock: () => number;
+
+  constructor(onProgress?: ProgressCallback, now?: number, clock: () => number = () => performance.now()) {
     this.onProgress = onProgress;
-    this.startedAt = now;
+    this.clock = clock;
+    this.startedAt = now ?? clock();
   }
 
   get snapshot(): LoadProgress {
@@ -273,8 +309,15 @@ export class ProgressTracker {
     this.state.loaded += byteLength;
     this.networkBytes += byteLength;
     this.networkMillis += millis;
-    if (this.networkMillis > 0) {
-      this.state.bytesPerSecond = (this.networkBytes / this.networkMillis) * 1000;
+    // Wall clock since the first byte, not the sum of per-request durations.
+    //
+    // Summing durations was right when requests were serial and is badly wrong once they
+    // overlap: eight concurrent 2-second requests sum to 16 seconds of "network time" for 2
+    // seconds of transfer, and the loader told a visitor 16 minutes remained on a 54-second
+    // download. Reported rate has to be measured the same way the visitor experiences it.
+    const elapsed = this.clock() - this.startedAt;
+    if (elapsed > 0) {
+      this.state.bytesPerSecond = (this.networkBytes / elapsed) * 1000;
       const remaining = (this.state.total ?? 0) - this.state.loaded;
       this.state.etaSeconds = remaining > 0 ? remaining / this.state.bytesPerSecond : 0;
     }

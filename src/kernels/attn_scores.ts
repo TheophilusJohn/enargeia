@@ -7,14 +7,31 @@ export const ATTN_SCORES: KernelSpec = {
   code,
   bindings: ['read', 'read', 'read_write', 'uniform'],
   workgroupSize: [16, 16, 1],
-  uniformBytes: 16,
+  uniformBytes: 32,
 };
 
-export function attnDims(seq: number, heads: number, kvHeads: number, headDim: number): ArrayBuffer {
-  return new Uint32Array([seq, heads, kvHeads, headDim]).buffer;
+/**
+ * `queries` rows against `keys` columns, with the chunk starting at absolute `queryBegin`.
+ * A prompt that fits in one chunk passes (n, n, 0), which is the pre-chunking shape.
+ */
+export function attnDims(
+  queries: number,
+  keys: number,
+  queryBegin: number,
+  heads: number,
+  kvHeads: number,
+  headDim: number,
+): ArrayBuffer {
+  const buffer = new ArrayBuffer(32);
+  new Uint32Array(buffer, 0, 6).set([queries, keys, queryBegin, heads, kvHeads, headDim]);
+  return buffer;
 }
 
-export function attnScoresWorkgroups(seq: number, heads: number): [number, number, number] {
-  const [x, y] = coverage(ATTN_SCORES, [seq, seq, 1]);
+export function attnScoresWorkgroups(
+  queries: number,
+  keys: number,
+  heads: number,
+): [number, number, number] {
+  const [x, y] = coverage(ATTN_SCORES, [keys, queries, 1]);
   return [x, y, heads];
 }

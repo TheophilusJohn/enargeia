@@ -7,13 +7,13 @@
     <title>Enargeia — a language model running on your own GPU</title>
     <meta
       name="description"
-      content="A browser-native LLM inference engine. Hand-written WGSL compute kernels, int4 weights, no ML framework. Qwen2.5-0.5B decodes at 43.1 tokens per second in 335 MiB, entirely client-side."
+      content="A browser-native LLM inference engine. Hand-written WGSL compute kernels, int4 weights, no ML framework. Qwen2.5-0.5B decodes at 43.1 tokens per second in 334.9 MiB of weights, entirely client-side."
     />
     <meta name="theme-color" content="#05050A" />
     <meta property="og:title" content="Enargeia" />
     <meta
       property="og:description"
-      content="A language model running on your own GPU. Hand-written WGSL kernels, int4 weights, 335 MiB resident, no server inference."
+      content="A language model running on your own GPU. Hand-written WGSL kernels, int4 weights, 334.9 MiB of weights and 458 MiB live, no server inference."
     />
     <meta property="og:type" content="website" />
 
@@ -74,8 +74,9 @@
               is the point</div>
           </div>
           <div class="stat">
-            <div class="n">335 <span style="font-size: 0.5em">MiB</span></div>
-            <div class="l">resident on the GPU. The same model in fp32 takes 1884.6</div>
+            <div class="n">334.9 <span style="font-size: 0.5em">MiB</span></div>
+            <div class="l">of weights on the GPU — 1884.6 for the same weights in fp32. Live
+              residency including the KV cache and activations is 458.0</div>
           </div>
           <div class="stat">
             <div class="n">1105</div>
@@ -94,7 +95,7 @@
         <p class="eyebrow">Run it</p>
         <h2>The machinery is visible while it runs.</h2>
         <p class="prose" style="margin-bottom: 28px">
-          Loading fetches 335 MiB of int4 weights, once, and caches them. The panel on the right
+          Loading fetches 334.9 MiB of int4 weights, once, and caches them. The panel on the right
           reads the same telemetry the engine publishes to itself: GPU time per kernel from
           <code>timestamp-query</code>, cache occupancy, the memory ledger, and attention weights
           as they are computed.
@@ -122,9 +123,11 @@
         <div class="claim">
           <p class="say">Four bits per weight, unpacked in registers and never written down.</p>
           <p class="fig">
-            <b>334.9 MiB</b> against <b>1884.6 MiB</b> in fp32 — <b>5.63×</b> smaller. Blocks of
-            64 along the reduction axis, each with its own scale and zero point. Dequantizing
-            into a buffer would move the same bytes the quantization exists to avoid
+            <b>334.9 MiB</b> of weights against <b>1884.6 MiB</b> for the same weights in fp32 —
+            <b>5.63×</b> smaller. Live residency is <b>458.0 MiB</b>: those weights, a 24.0 MiB
+            KV cache, and 99.1 MiB of activation scratch. Blocks of 64 along the reduction axis,
+            each with its own scale and zero point. Dequantizing into a buffer would move the
+            same bytes the quantization exists to avoid
           </p>
         </div>
 
@@ -197,8 +200,12 @@
             <tr><td>prefill, 128 tokens</td><td class="n">1105 tok/s</td><td class="n">225</td></tr>
             <tr><td>prefill, 2048 tokens</td><td class="n">797 tok/s</td><td class="n">212</td></tr>
             <tr><td>time to first token, 32-token prompt</td><td class="n">219 ms</td><td class="n">—</td></tr>
+            <tr><td>cold first load, R2 over CDN</td><td class="n">14.6 s</td><td class="n">—</td></tr>
+            <tr><td>second visit, from cache</td><td class="n">1.4 s</td><td class="n">—</td></tr>
             <tr><td>weights resident</td><td class="n">334.9 MiB</td><td class="n">1884.6 MiB</td></tr>
             <tr><td>KV cache at 2048, f16</td><td class="n">24.0 MiB</td><td class="n">48.0 MiB</td></tr>
+            <tr><td>activation scratch</td><td class="n">99.1 MiB</td><td class="n">—</td></tr>
+            <tr><td><b>live residency, everything</b></td><td class="n"><b>458.0 MiB</b></td><td class="n">—</td></tr>
             <tr><td>perplexity, 1,256 held-out positions</td><td class="n">36.21</td><td class="n">31.90</td></tr>
           </tbody>
         </table>
@@ -246,7 +253,8 @@
               behaves like it: it loses the thread over a few paragraphs, invents facts with
               total confidence, and cannot do arithmetic reliably. If you want a good answer to
               something, ask a frontier model. This page is about the engine underneath, which
-              would run a better model the same way if a better model fit in 335 MiB.
+              would run a better model the same way if a better model fit in a few hundred
+              megabytes.
             </p>
           </div>
         </details>
@@ -286,10 +294,15 @@
           <summary>Why is the first load so large?</summary>
           <div class="prose">
             <p>
-              Because the weights are the model. 335 MiB is 494 million parameters at
+              Because the weights are the model. 334.9 MiB is 494 million parameters at
               four bits each, plus an int8 embedding table and the per-block scales. It is cached
-              after the first visit, so the second load takes about 1.5 seconds and no network
-              transfer at all.
+              after the first visit — a second visit takes <strong>1.4 seconds</strong> and two
+              requests, against <strong>14.6 seconds</strong> cold at 28.7 MB/s.
+            </p>
+            <p>
+              That figure is the weights alone. Everything the engine holds on the GPU — weights,
+              a 24.0 MiB KV cache at a 2048-token context, and 99.1 MiB of activation scratch —
+              comes to <strong>458.0 MiB</strong>, which the inspector shows while it runs.
             </p>
           </div>
         </details>

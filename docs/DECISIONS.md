@@ -896,3 +896,48 @@ dynamic import.
 A visitor who reads the page and never runs the demo should not download an inference engine,
 and a hero that arrives a beat late costs nothing. Lighthouse: desktop 100/100/100/100, mobile
 96/100/100/100 with FCP 1.6 s under 4× CPU throttling.
+
+### 76. Prefill runs in chunks of 256 queries
+
+**Chosen:** size the prefill graph to a 256-query chunk against the full cached prefix, and run
+a long prompt through it in several passes.
+**Rejected:** sizing to `maxContext` (773.8 MiB of scratch); a smaller context on mobile, which
+was a workaround for this and is now withdrawn.
+**Decided by:** enumerating live allocations rather than reasoning about them — the two
+`heads × 2048 × 2048` attention buffers were 512 MiB of 773.8 MiB of capacity. Chunked:
+**99.1 MiB of scratch, 458.0 MiB resident against 1132.6.** A chunk-size sweep with `chunk =
+2048` as the control showed prefill time flat within 2.7% across a 16× range, so the memory is
+free.
+
+Both predictions about speed were wrong — a fit said +13%, the first measurement said −10% —
+and the second was wrong because it compared across sessions where run-to-run variance is 8%.
+The control row exists so that cannot happen again.
+
+### 77. Weights are fetched as coalesced 16 MiB spans, concurrently, through the Cache API
+
+**Chosen:** sort every byte range, merge into spans of at most 16 MiB, fetch eight at a time
+through `CachedChunkReader`, and slice each tensor out of its span.
+**Rejected:** one request per range (what shipped), which is 630 serial round trips; raising
+concurrency alone, which saturated at 7 MB/s against a 25–30 MB/s link.
+**Decided by:** **78.3 s → 14.6 s cold, and 75.7 s → 1.4 s warm.** The quantized loader had
+never used the Cache API at all, so every visit re-downloaded 335 MB. None of this was visible
+over loopback, where a round trip is free and a cache miss costs nothing — which is why the M2
+load numbers were honest measurements of the wrong thing.
+
+### 78. Progress is rated against wall clock
+
+**Chosen:** bytes divided by elapsed time since the load began.
+**Rejected:** bytes divided by the sum of per-request durations, which is what it did.
+**Decided by:** the sum counts overlapping requests several times over. The loader told a
+visitor **16 minutes remained on a 54-second download**. A displayed number that is wrong at the
+worst moment of the experience is worse than no number.
+
+### 79. Weights are hosted on R2 behind a zone domain, not the r2.dev subdomain
+
+**Chosen:** `models.enargeia.dev` as a custom domain on the bucket, with a CORS policy listing
+the site's origins and exposing `Content-Range`; the URL comes from `VITE_MODEL_URL`, so local
+development and production differ in that value and nothing else.
+**Rejected:** the `pub-*.r2.dev` URL, which Cloudflare documents as development-only and rate
+limits; committing 335 MB to the Pages build, which caps files at 25 MiB.
+**Decided by:** the loader is built on range requests, so the host has to support them and has
+to expose `Content-Range` cross-origin. R2 does both; a zone domain adds the CDN cache in front.

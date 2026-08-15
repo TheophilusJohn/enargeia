@@ -1,7 +1,7 @@
 /**
  * First load, which is the highest-abandonment moment on the site.
  *
- * Two bars, not one. A download of 335 MB and a compilation of 17 pipelines are different
+ * Two bars, not one. A download of 334.9 MiB and a compilation of 17 pipelines are different
  * waits — one is the network and takes a minute on a slow connection, the other is the CPU and
  * takes ten milliseconds — and a single merged bar that sits at 99% while the second happens
  * reads as a hang. Both report the numbers behind them, so a slow bar can be told from a stuck
@@ -63,12 +63,14 @@ export class Loader {
     });
 
     this.status.innerHTML =
-      'Nothing has been downloaded yet. Loading fetches <strong>335 MiB</strong> of int4 weights ' +
-      'to your graphics card, where they stay — no text you type leaves this tab, because there ' +
-      'is no server to send it to.';
+      'Nothing has been downloaded yet. Loading fetches <strong>334.9 MiB</strong> of int4 ' +
+      'weights to your graphics card, where they stay — no text you type leaves this tab, ' +
+      'because there is no server to send it to. In use the engine holds 458.0 MiB in total, ' +
+      'itemised in the inspector once it is running.';
     this.detail.textContent =
-      'The download is cached, so a second visit skips it. On a 50 Mbit/s connection the first ' +
-      'load takes about a minute.';
+      'Cached after the first visit: a second visit is 1.4 seconds and two requests. Measured ' +
+      'cold from R2 at 28.7 MB/s, the first load is 14.6 seconds — on a 50 Mbit/s connection, ' +
+      'closer to a minute.';
 
     this.root.append(
       this.headline,

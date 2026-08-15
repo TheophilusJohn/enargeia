@@ -6,10 +6,16 @@
 // surface as wrong attention output rather than being quietly absorbed here.
 
 struct Dims {
-    seq: u32,
+    /** Queries in this chunk, keys cached so far (including this chunk), and the chunk's
+     *  absolute start position. Equal to (seq, seq, 0) when the prompt runs in one chunk. */
+    queries: u32,
+    keys: u32,
+    queryBegin: u32,
     heads: u32,
     kvHeads: u32,
     headDim: u32,
+    _pad0: u32,
+    _pad1: u32,
 };
 
 @group(0) @binding(0) var<storage, read>       weights: array<f32>;
@@ -20,7 +26,7 @@ struct Dims {
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let perRow = dims.heads * dims.headDim;
-    if (gid.x >= perRow || gid.y >= dims.seq) {
+    if (gid.x >= perRow || gid.y >= dims.queries) {
         return;
     }
     let i = gid.y;
@@ -28,10 +34,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let d = gid.x % dims.headDim;
 
     let kvHead = h / (dims.heads / dims.kvHeads);
-    let wBase = (h * dims.seq + i) * dims.seq;
+    let wBase = (h * dims.queries + i) * dims.keys;
 
     var acc = 0.0;
-    for (var j = 0u; j <= i; j = j + 1u) {
+    for (var j = 0u; j <= i + dims.queryBegin; j = j + 1u) {
         acc = acc + weights[wBase + j] * v[(j * dims.kvHeads + kvHead) * dims.headDim + d];
     }
     out[i * perRow + gid.x] = acc;

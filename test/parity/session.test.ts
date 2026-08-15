@@ -153,6 +153,41 @@ describe('prefill + decode against the no-cache path', () => {
   }, 900_000);
 });
 
+describe('chunked prefill', () => {
+  // The property that matters: how a prompt is split must not change what the model produces.
+  // A chunk boundary is exactly where an off-by-one in the causal mask, a RoPE position, or a
+  // cache write offset would hide — none of which look wrong in the generated text.
+  it('gives the same tokens whatever the chunk size', async () => {
+    const long = [...prompt];
+    while (long.length < 200) long.push(...prompt);
+    const window = long.slice(0, 200);
+
+    const run = async (prefillChunk: number) => {
+      const session = new Session(ctx.device, ctx.queue, pool, pipelines, weights, config, {
+        maxContext: MAX_CONTEXT,
+        sampling: GREEDY,
+        prefillChunk,
+      });
+      try {
+        expect(session.prefillChunk).toBe(prefillChunk);
+        return (await session.generate({ prompt: window, maxTokens: 12 })).tokens;
+      } finally {
+        session.destroy();
+      }
+    };
+
+    // 256 covers the prompt in one pass; 64 needs four, and 37 gives a ragged last chunk.
+    const oneShot = await run(256);
+    const chunked = await run(64);
+    const ragged = await run(37);
+    console.log(`[session] prefill in one chunk: ${JSON.stringify(oneShot)}`);
+    console.log(`[session] prefill in 4 chunks:  ${JSON.stringify(chunked)}`);
+    console.log(`[session] ragged chunks of 37:  ${JSON.stringify(ragged)}`);
+    expect(chunked).toEqual(oneShot);
+    expect(ragged).toEqual(oneShot);
+  }, 900_000);
+});
+
 describe('GPU sampling', () => {
   it('greedy matches the argmax path', async () => {
     const session = new Session(ctx.device, ctx.queue, pool, pipelines, weights, config, {

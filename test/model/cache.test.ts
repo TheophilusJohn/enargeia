@@ -204,20 +204,38 @@ describe('ProgressTracker', () => {
   });
 
   it('measures rate over network bytes only', () => {
-    const tracker = new ProgressTracker();
+    let clock = 0;
+    const tracker = new ProgressTracker(undefined, 0, () => clock);
     tracker.total(2000);
     // A cached chunk must not inflate the rate to something meaningless.
     tracker.chunkFromCache(1000);
     expect(tracker.snapshot.bytesPerSecond).toBeNull();
+    clock = 1000;
     tracker.chunkFromNetwork(1000, 1000);
     expect(tracker.snapshot.bytesPerSecond).toBeCloseTo(1000, 5);
     expect(tracker.snapshot.etaSeconds).toBe(0);
   });
 
   it('estimates time remaining from the observed rate', () => {
-    const tracker = new ProgressTracker();
+    let clock = 0;
+    const tracker = new ProgressTracker(undefined, 0, () => clock);
     tracker.total(10_000);
-    tracker.chunkFromNetwork(2_000, 1_000); // 2000 B/s, 8000 B left
+    clock = 1000;
+    tracker.chunkFromNetwork(2_000, 1_000); // 2000 B/s of wall clock, 8000 B left
     expect(tracker.snapshot.etaSeconds).toBeCloseTo(4, 5);
+  });
+
+  it('rates concurrent requests against wall clock, not summed durations', () => {
+    // The regression this guards: summing per-request durations counts overlapping requests
+    // several times over, so eight concurrent one-second fetches looked like eight seconds of
+    // network time. The loader told a visitor 16 minutes remained on a 54-second download.
+    let clock = 0;
+    const tracker = new ProgressTracker(undefined, 0, () => clock);
+    tracker.total(8000);
+    clock = 1000;
+    for (let i = 0; i < 8; i++) tracker.chunkFromNetwork(1000, 1000);
+    // 8000 bytes in one second of wall clock, however many requests carried them.
+    expect(tracker.snapshot.bytesPerSecond).toBeCloseTo(8000, 5);
+    expect(tracker.snapshot.etaSeconds).toBe(0);
   });
 });

@@ -66,6 +66,14 @@ export interface ModelConfig {
   ropeTheta: number;
 }
 
+export interface ForwardGraphOptions {
+  /**
+   * Longest key extent any chunk will attend over. Defaults to `maxSeq`, which is right for a
+   * graph that runs whole prompts; a chunked prefill passes the full context.
+   */
+  keyCapacity?: number;
+}
+
 export interface DispatchStep {
   kind: 'dispatch';
   /** The reference's name for the activation this produces. */
@@ -74,8 +82,14 @@ export interface DispatchStep {
   kernel: ComputeKernel;
   bindGroup: GPUBindGroup;
   uniform: PooledBuffer;
-  /** Uniform contents for a given sequence length. */
-  uniformFor: (seq: number) => ArrayBuffer;
+  /**
+   * Uniform contents for a chunk: `seq` queries starting at absolute position `begin`.
+   *
+   * Most steps ignore `begin` — an RMSNorm over 256 rows is the same work wherever those rows
+   * sit. The ones that do not are attention, RoPE, and the cache writes, which is exactly the
+   * set that has to know where in the sequence it is.
+   */
+  uniformFor: (seq: number, begin: number) => ArrayBuffer;
   /**
    * Dispatch geometry for a given sequence length, evaluated at encode time.
    *
@@ -84,7 +98,7 @@ export interface DispatchStep {
    * did — every one of them returning immediately from its bounds check, and the launch
    * overhead alone dominating short prompts.
    */
-  workgroupsFor: (seq: number) => readonly [number, number, number];
+  workgroupsFor: (seq: number, begin: number) => readonly [number, number, number];
 }
 
 /** A buffer-to-buffer copy whose offset depends on the sequence length. */
@@ -147,6 +161,7 @@ export function tapKey(stage: string, layer: number | null): string {
 export class ForwardGraph {
   readonly config: ModelConfig;
   readonly maxSeq: number;
+  readonly keyCapacity: number;
   readonly steps: Step[] = [];
   readonly taps = new Map<string, Tap>();
   readonly tokenIds: PooledBuffer;
@@ -174,11 +189,16 @@ export class ForwardGraph {
      * no separate copy, and decode inherits a populated cache with nothing to migrate.
      */
     kv?: KVCache,
+    options: ForwardGraphOptions = {},
   ) {
     this.device = device;
     this.pool = pool;
     this.config = config;
     this.maxSeq = maxSeq;
+    // How many keys a chunk may have to attend over. Equal to `maxSeq` when the graph runs a
+    // whole prompt in one pass, and the full context when it is chunked — the score tensor is
+    // `heads x maxSeq x keyCapacity`, so this is the term that decides prefill's memory.
+    this.keyCapacity = Math.max(maxSeq, options.keyCapacity ?? maxSeq);
     this.embeddingParts = (weights.embedding.quantParts ?? weights.embedding.parts).length;
 
     const C = config;
@@ -210,8 +230,8 @@ export class ForwardGraph {
     const v = scratch(maxSeq * kvDim, 'v');
     const qRope = scratch(maxSeq * C.hidden, 'q_rope');
     const kRope = scratch(maxSeq * kvDim, 'k_rope');
-    const scores = scratch(C.heads * maxSeq * maxSeq, 'scores');
-    const attnWeights = scratch(C.heads * maxSeq * maxSeq, 'attn_weights');
+    const scores = scratch(C.heads * maxSeq * this.keyCapacity, 'scores');
+    const attnWeights = scratch(C.heads * maxSeq * this.keyCapacity, 'attn_weights');
     const attnOut = scratch(maxSeq * C.hidden, 'attn_out');
     const projected = scratch(maxSeq * C.hidden, 'o_proj');
     const gate = scratch(maxSeq * C.intermediate, 'mlp_gate');
@@ -228,8 +248,8 @@ export class ForwardGraph {
       spec: KernelSpec,
       inputs: readonly (PooledBuffer | GPUBufferBinding)[],
       output: PooledBuffer | GPUBufferBinding,
-      uniformFor: (seq: number) => ArrayBuffer,
-      workgroupsFor: (seq: number) => readonly [number, number, number],
+      uniformFor: (seq: number, begin: number) => ArrayBuffer,
+      workgroupsFor: (seq: number, begin: number) => readonly [number, number, number],
     ): void => {
       const kernel = kernelFor(spec);
       const uniform = kernel.uniform(pool);
@@ -267,7 +287,8 @@ export class ForwardGraph {
       workgroupsFor: (m: number, n: number) => readonly [number, number, number],
       decodeShaped = false,
       outStride?: number,
-      outOffset = 0,
+      /** Element offset of the output, per chunk — non-zero only when writing the KV cache. */
+      outOffset: (begin: number) => number = () => 0,
     ): void => {
       const bias = biasName ? weights.get(biasName) : zeroBias;
       if (weights.isQuantized) {
@@ -275,13 +296,15 @@ export class ForwardGraph {
         const spec = decodeShaped ? MATMUL_Q4_DECODE : MATMUL_Q4_PREFILL;
         dispatch(stage, layer, spec,
           [input, q.packed.binding, q.scales.binding, q.zeros.binding, bias], output,
-          (seq) => matmulQ4Dims(mFor(seq), n, k, biasName !== null, q.blockSize, outStride ?? n, outOffset),
+          (seq, begin) =>
+            matmulQ4Dims(mFor(seq), n, k, biasName !== null, q.blockSize, outStride ?? n, outOffset(begin)),
           decodeShaped
             ? () => matmulQ4DecodeWorkgroups(n)
             : (seq) => matmulQ4PrefillWorkgroups(mFor(seq), n));
       } else {
         dispatch(stage, layer, MATMUL_BIAS, [input, weights.get(weightName), bias], output,
-          (seq) => matmulBiasDims(mFor(seq), n, k, biasName !== null, outStride ?? n, outOffset),
+          (seq, begin) =>
+            matmulBiasDims(mFor(seq), n, k, biasName !== null, outStride ?? n, outOffset(begin)),
           (seq) => workgroupsFor(mFor(seq), n));
       }
     };
@@ -376,19 +399,20 @@ export class ForwardGraph {
       const f16Cache = kv?.dtype === 'f16';
       project('v', layer, normed, wn('self_attn.v_proj.weight'), wn('self_attn.v_proj.bias'),
         layerCache && !f16Cache ? layerCache.vBinding : v, kvDim, C.hidden,
-        (seq) => seq, matmulBiasWorkgroups);
+        (seq) => seq, matmulBiasWorkgroups, false, undefined,
+        layerCache && !f16Cache ? (begin) => begin * kvDim : undefined);
       tap('v', layer, v, (s) => s * kvDim, at,
         [{ buffer: normed, reference: `layer${layer}.post_rmsnorm` }]);
       if (layerCache && f16Cache) {
         // Halves share a u32, so the projection cannot write the cache directly.
         dispatch('v_pack', layer, packSpec, [v], layerCache.vBinding,
-          (seq) => cachePackDims(seq * kvDim, 0),
+          (seq, begin) => cachePackDims(seq * kvDim, begin * kvDim),
           (seq) => cachePackWorkgroups('f16', seq * kvDim));
       }
 
       at = mark();
       dispatch('q_rope', layer, ROPE, [q], qRope,
-        (seq) => ropeDims(seq, C.heads, C.headDim, 0, C.ropeTheta),
+        (seq, begin) => ropeDims(seq, C.heads, C.headDim, begin, C.ropeTheta),
         (seq) => ropeWorkgroups(seq, C.heads, C.headDim));
       tap('q_rope', layer, qRope, (s) => s * C.hidden, at,
         [{ buffer: q, reference: `layer${layer}.q` }]);
@@ -396,24 +420,26 @@ export class ForwardGraph {
       at = mark();
       dispatch('k_rope', layer, ROPE, [k],
         layerCache && !f16Cache ? layerCache.kBinding : kRope,
-        (seq) => ropeDims(seq, C.kvHeads, C.headDim, 0, C.ropeTheta),
+        (seq, begin) =>
+          ropeDims(seq, C.kvHeads, C.headDim, begin, C.ropeTheta,
+            layerCache && !f16Cache ? begin * kvDim : 0),
         (seq) => ropeWorkgroups(seq, C.kvHeads, C.headDim));
       tap('k_rope', layer, kRope, (s) => s * kvDim, at,
         [{ buffer: k, reference: `layer${layer}.k` }]);
       if (layerCache && f16Cache) {
         dispatch('k_pack', layer, packSpec, [kRope], layerCache.kBinding,
-          (seq) => cachePackDims(seq * kvDim, 0),
+          (seq, begin) => cachePackDims(seq * kvDim, begin * kvDim),
           (seq) => cachePackWorkgroups('f16', seq * kvDim));
       }
 
       at = mark();
       dispatch('scores', layer, attnScoresSpec(kv?.dtype ?? 'f32'),
         [qRope, layerCache ? layerCache.kBinding : kRope], scores,
-        (seq) => attnDims(seq, C.heads, C.kvHeads, C.headDim),
-        (seq) => attnScoresWorkgroups(seq, C.heads));
+        (seq, begin) => attnDims(seq, begin + seq, begin, C.heads, C.kvHeads, C.headDim),
+        (seq, begin) => attnScoresWorkgroups(seq, begin + seq, C.heads));
 
       dispatch('attn_weights', layer, SOFTMAX, [scores], attnWeights,
-        (seq) => softmaxDims(C.heads * seq, seq),
+        (seq, begin) => softmaxDims(C.heads * seq, begin + seq),
         (seq) => softmaxWorkgroups(C.heads * seq));
       // Two dispatches: the pre-softmax scores are not a dumped boundary, so isolating the
       // softmax means recomputing them from reference q and k.
@@ -425,7 +451,7 @@ export class ForwardGraph {
       at = mark();
       dispatch('attn_out', layer, attnApplySpec(kv?.dtype ?? 'f32'),
         [attnWeights, layerCache ? layerCache.vBinding : v], attnOut,
-        (seq) => attnDims(seq, C.heads, C.kvHeads, C.headDim),
+        (seq, begin) => attnDims(seq, begin + seq, begin, C.heads, C.kvHeads, C.headDim),
         (seq) => attnApplyWorkgroups(seq, C.heads, C.headDim));
       tap('attn_out', layer, attnOut, (s) => s * C.hidden, at, [
         { buffer: attnWeights, reference: `layer${layer}.attn_weights` },
@@ -492,6 +518,7 @@ export class ForwardGraph {
     }
 
     const finalNormAt = mark();
+    this.tailBegin = finalNormAt;
     dispatch('final_norm', null, RMSNORM, [current, weights.get('model.norm.weight')], normed,
       (seq) => rmsnormDims(seq, C.hidden, C.rmsNormEps), (seq) => rmsnormWorkgroups(seq));
     tap('final_norm', null, normed, (s) => s * C.hidden, finalNormAt,
@@ -551,16 +578,46 @@ export class ForwardGraph {
    * that ran at the wrong length reads a differently-shaped tensor rather than an
    * out-of-range one.
    */
-  setSequenceLength(seq: number): void {
-    if (seq === this.currentSeq) return;
+  setSequenceLength(seq: number, begin = 0): void {
+    if (seq === this.currentSeq && begin === this.currentBegin) return;
     if (seq < 1 || seq > this.maxSeq) {
       throw new RangeError(`sequence length ${seq} outside [1, ${this.maxSeq}]`);
     }
     for (const step of this.steps) {
       if (step.kind !== 'dispatch') continue;
-      this.device.queue.writeBuffer(step.uniform.buffer, 0, step.uniformFor(seq));
+      this.device.queue.writeBuffer(step.uniform.buffer, 0, step.uniformFor(seq, begin));
     }
     this.currentSeq = seq;
+    this.currentBegin = begin;
+  }
+
+  private currentBegin = -1;
+
+  /** Index of the first step of the tail — final norm, LM head, argmax. */
+  private tailBegin = 0;
+
+  /**
+   * Run a prompt of any length through the graph, in chunks of at most `maxSeq`.
+   *
+   * One submit per chunk, because uniforms are written through the queue rather than recorded
+   * into the encoder: a single encoder covering every chunk would see only the last chunk's
+   * uniforms. Prefill is hundreds of milliseconds, so a handful of extra submits is free.
+   *
+   * The tail — final norm, LM head, argmax — runs only on the last chunk. It is 25% of the
+   * per-token GPU cost at decode shapes and produces logits nobody reads for an intermediate
+   * chunk.
+   */
+  encodeChunks(device: GPUDevice, queue: GPUQueue, length: number, writeTokens: (begin: number, count: number) => void): void {
+    if (length < 1) throw new RangeError(`prompt length ${length} must be at least 1`);
+    for (let begin = 0; begin < length; begin += this.maxSeq) {
+      const count = Math.min(this.maxSeq, length - begin);
+      const last = begin + count >= length;
+      writeTokens(begin, count);
+      this.setSequenceLength(count, begin);
+      const encoder = device.createCommandEncoder({ label: `prefill/chunk@${begin}` });
+      this.encode(encoder, count, last ? this.steps.length - 1 : this.tailBegin - 1, 0, begin);
+      queue.submit([encoder.finish()]);
+    }
   }
 
   /**
@@ -575,8 +632,9 @@ export class ForwardGraph {
     seq: number,
     upToStep = this.steps.length - 1,
     fromStep = 0,
+    begin = 0,
   ): void {
-    if (this.currentSeq !== seq) {
+    if (this.currentSeq !== seq || this.currentBegin !== begin) {
       throw new Error('setSequenceLength must be called before encode');
     }
     let pass: GPUComputePassEncoder | null = null;
@@ -602,7 +660,7 @@ export class ForwardGraph {
         continue;
       }
       if (!pass) pass = encoder.beginComputePass({ label: 'forward' });
-      step.kernel.encode(pass, step.bindGroup, step.workgroupsFor(seq));
+      step.kernel.encode(pass, step.bindGroup, step.workgroupsFor(seq, begin));
     }
     endPass();
   }

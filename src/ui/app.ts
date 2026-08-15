@@ -40,9 +40,10 @@ function unsupported(reason: string, detail: string): HTMLElement {
     el('p', { class: 'prose', text: `${reason} ${advice}` }),
     el('p', { class: 'note', text: detail }),
     el('p', { class: 'prose' }, [
-      'Everything below still applies: the engine is 335 MiB resident against 1884.6 MiB for ' +
-      'the same model in fp32, decodes at 43.1 tokens per second at a 2048-token context, and ' +
-      'prefills at 1105. Those numbers were measured on an M2, and the ',
+      'Everything below still applies: the weights are 334.9 MiB against 1884.6 MiB for the ' +
+      'same model in fp32 — 458.0 MiB live, with the KV cache and activations — and it decodes ' +
+      'at 43.1 tokens per second at a 2048-token context and prefills at 1105. Those numbers ' +
+      'were measured on an M2, and the ',
       el('a', { href: 'https://github.com/TheophilusJohn/enargeia/blob/main/BENCH.md',
         text: 'measurement log' }),
       ' records how.',

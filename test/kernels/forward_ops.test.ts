@@ -193,7 +193,7 @@ describe('attn_scores', () => {
     const q = randomFloats(seq * heads * headDim, 41);
     const k = randomFloats(seq * kvHeads * headDim, 42);
     const actual = await run(ATTN_SCORES, [q, k], heads * seq * seq,
-      attnDims(seq, heads, kvHeads, headDim), attnScoresWorkgroups(seq, heads));
+      attnDims(seq, seq, 0, heads, kvHeads, headDim), attnScoresWorkgroups(seq, seq, heads));
     const expected = attentionScores(q, k, seq, heads, kvHeads, headDim);
     // The reference uses -Infinity for masked slots and the kernel a finite sentinel, so
     // compare only the unmasked triangle and check the mask separately.
@@ -219,7 +219,7 @@ describe('attn_scores', () => {
     k[0 * headDim] = 3; // kv head 0
     k[1 * headDim] = 7; // kv head 1
     const actual = await run(ATTN_SCORES, [q, k], heads * 1 * 1,
-      attnDims(1, heads, kvHeads, headDim), attnScoresWorkgroups(1, heads));
+      attnDims(1, 1, 0, heads, kvHeads, headDim), attnScoresWorkgroups(1, 1, heads));
     const scale = 1 / Math.sqrt(headDim);
     for (let h = 0; h < 7; h++) expect(actual[h]).toBeCloseTo(3 * scale, 4);
     for (let h = 7; h < 14; h++) expect(actual[h]).toBeCloseTo(7 * scale, 4);
@@ -266,8 +266,77 @@ describe('attn_apply', () => {
     const weights = softmaxRows(scores, heads * seq, seq);
     const v = randomFloats(seq * kvHeads * headDim, 62);
     const actual = await run(ATTN_APPLY, [weights, v], seq * heads * headDim,
-      attnDims(seq, heads, kvHeads, headDim), attnApplyWorkgroups(seq, heads, headDim));
+      attnDims(seq, seq, 0, heads, kvHeads, headDim), attnApplyWorkgroups(seq, heads, headDim));
     expectMatches(actual, attentionApply(weights, v, seq, heads, kvHeads, headDim), 'attn_apply');
+  });
+});
+
+describe('attention over a chunk of queries', () => {
+  // Chunked prefill runs queries [begin, begin+count) against keys [0, begin+count). Every
+  // value it produces has to equal the corresponding row of the one-shot square, or the graph
+  // is computing a different function depending on how the prompt happened to be split.
+  const seq = 15, heads = 14, kvHeads = 2, headDim = 64;
+
+  it('reproduces the matching rows of the full square', async () => {
+    const q = randomFloats(seq * heads * headDim, 41);
+    const k = randomFloats(seq * kvHeads * headDim, 42);
+    const whole = await run(ATTN_SCORES, [q, k], heads * seq * seq,
+      attnDims(seq, seq, 0, heads, kvHeads, headDim), attnScoresWorkgroups(seq, seq, heads));
+
+    const begin = 8;
+    const count = seq - begin;
+    const keys = seq;
+    // The chunk's queries are rows `begin..seq-1` of q, which the graph supplies as its own
+    // buffer; here that is a slice.
+    const qChunk = q.slice(begin * heads * headDim);
+    const strip = await run(ATTN_SCORES, [qChunk, k], heads * count * keys,
+      attnDims(count, keys, begin, heads, kvHeads, headDim),
+      attnScoresWorkgroups(count, keys, heads));
+
+    for (let h = 0; h < heads; h++) {
+      for (let i = 0; i < count; i++) {
+        for (let j = 0; j <= begin + i; j++) {
+          expect(strip[(h * count + i) * keys + j]).toBeCloseTo(
+            whole[(h * seq + (begin + i)) * seq + j], 4,
+          );
+        }
+        // Everything after the chunk's own position stays masked.
+        for (let j = begin + i + 1; j < keys; j++) {
+          expect(strip[(h * count + i) * keys + j]).toBeLessThan(-1e29);
+        }
+      }
+    }
+  });
+
+  it('applies weights over the whole prefix, not just the chunk', async () => {
+    const scores = randomFloats(heads * seq * seq, 61);
+    const weights = softmaxRows(scores, heads * seq, seq);
+    const v = randomFloats(seq * kvHeads * headDim, 62);
+    const whole = await run(ATTN_APPLY, [weights, v], seq * heads * headDim,
+      attnDims(seq, seq, 0, heads, kvHeads, headDim), attnApplyWorkgroups(seq, heads, headDim));
+
+    const begin = 8;
+    const count = seq - begin;
+    // Rows begin..seq-1 of the weight tensor, head-major, restacked as a count x seq strip.
+    const strip = new Float32Array(heads * count * seq);
+    for (let h = 0; h < heads; h++) {
+      for (let i = 0; i < count; i++) {
+        for (let j = 0; j < seq; j++) {
+          strip[(h * count + i) * seq + j] = weights[(h * seq + (begin + i)) * seq + j];
+        }
+      }
+    }
+    const actual = await run(ATTN_APPLY, [strip, v], count * heads * headDim,
+      attnDims(count, seq, begin, heads, kvHeads, headDim),
+      attnApplyWorkgroups(count, heads, headDim));
+
+    for (let i = 0; i < count; i++) {
+      for (let x = 0; x < heads * headDim; x++) {
+        expect(actual[i * heads * headDim + x]).toBeCloseTo(
+          whole[(begin + i) * heads * headDim + x], 4,
+        );
+      }
+    }
   });
 });
 

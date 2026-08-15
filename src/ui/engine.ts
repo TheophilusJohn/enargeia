@@ -18,7 +18,15 @@ import { precompile, allKernelSpecs } from '../runtime/precompile.ts';
 import type { Telemetry } from '../runtime/telemetry.ts';
 import { Tokenizer } from '../tokenizer/tokenizer.ts';
 
-const MODEL_URL = '/models/qwen2.5-0.5b.enargeia';
+/**
+ * Where the weights come from. `.env` for local development, `.env.production` for the
+ * deployed site — the two differ in this value and nothing else.
+ *
+ * Production points at an R2 bucket on a zone subdomain. The loader issues HTTP range requests
+ * to fetch and cache the file in chunks, so the bucket needs `Accept-Ranges` (R2 gives it) and
+ * a CORS policy that exposes `Content-Range` (set on the bucket, not here).
+ */
+const MODEL_URL = import.meta.env.VITE_MODEL_URL ?? '/models/qwen2.5-0.5b.enargeia';
 const TOKENIZER_URL = '/tokenizer.json';
 
 /** Qwen2.5-0.5B-Instruct. Fixed because exactly one model ships. */
@@ -35,19 +43,15 @@ export const CONFIG: ModelConfig = {
 };
 
 /**
- * Context length, and the one place the app adapts to the device.
+ * Context length. The same on every device, which it was not for one afternoon.
  *
- * Prefill activations dominate resident memory and grow with the square of the context: the
- * two attention buffers alone are 14 × ctx × ctx × 4 bytes each, 470 MiB at 2048 and 118 at
- * 1024. On a phone that difference is the difference between running and an out-of-memory
- * failure, so a mobile-class adapter gets the shorter context and the device panel says so.
+ * A mobile adapter briefly got 1024 instead, because prefill activations were sized to the
+ * whole context and the two attention buffers alone were 448 MiB at 2048. Chunking prefill
+ * removed that: the buffers are now sized to a 256-query chunk and total scratch is 99 MiB
+ * regardless of context. Halving the context would save about 58 MiB of a 458 MiB footprint
+ * and cost half the usable conversation, which is no longer a trade worth making.
  */
 export const MAX_CONTEXT = 2048;
-export const MOBILE_MAX_CONTEXT = 1024;
-
-export function contextFor(profile: DeviceProfile): number {
-  return profile.tier === 'mobile' ? MOBILE_MAX_CONTEXT : MAX_CONTEXT;
-}
 
 /**
  * Download and compilation are reported separately because they are different waits with
@@ -179,6 +183,12 @@ export class Engine {
     this.weights = await WeightStore.loadQuantized(ctx.device, ctx.profile, {
       ref: { modelId: 'Qwen/Qwen2.5-0.5B-Instruct', revision: 'q4-embed-q8', file: 'model' },
       source: new HttpRangeSource(MODEL_URL),
+      // Overridable for measurement: the right value depends on round-trip latency to whatever
+      // is serving the weights, which is not knowable from here.
+      concurrency: Number(new URLSearchParams(location.search).get('concurrency')) || undefined,
+      // Diagnostic only: skips the Cache API entirely, which is how the cost of populating it
+      // was separated from the cost of the download.
+      noCache: new URLSearchParams(location.search).has('nocache'),
       onProgress: (progress: LoadProgress) => {
         this.emit({
           loaded: progress.loaded,
@@ -208,7 +218,7 @@ export class Engine {
     });
     this.compileSeconds = (performance.now() - compileStarted) / 1000;
 
-    this.maxContext = contextFor(ctx.profile);
+    this.maxContext = MAX_CONTEXT;
     this.session = new Session(
       ctx.device, ctx.queue, this.pool, this.pipelines, this.weights, CONFIG,
       {

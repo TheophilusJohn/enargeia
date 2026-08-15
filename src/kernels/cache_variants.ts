@@ -52,12 +52,28 @@ struct Dims {
 };
 `;
 
+/**
+ * Prefill attention over a chunk of queries against the whole cached prefix.
+ *
+ * `queries` is the chunk length and `keys` is everything cached so far including it, so the
+ * score tensor is a `queries × keys` strip rather than a `context × context` square. That is
+ * what lets a 2048-token prompt run without allocating 14 × 2048 × 2048 twice — see the
+ * residency measurement in BENCH.md. When the whole prompt fits in one chunk the two are equal
+ * and the shapes are exactly what they were before.
+ *
+ * `queryBegin` is the absolute position of the chunk's first query. The causal mask compares
+ * against `queryBegin + i`, because a query in chunk 3 may attend to every key in chunks 0-2.
+ */
 const PREFILL_DIMS = `
 struct Dims {
-    seq: u32,
+    queries: u32,
+    keys: u32,
+    queryBegin: u32,
     heads: u32,
     kvHeads: u32,
     headDim: u32,
+    _pad0: u32,
+    _pad1: u32,
 };
 `;
 
@@ -77,11 +93,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = gid.x;
     let i = gid.y;
     let h = gid.z;
-    if (j >= dims.seq || i >= dims.seq || h >= dims.heads) {
+    if (j >= dims.keys || i >= dims.queries || h >= dims.heads) {
         return;
     }
-    let slot = (h * dims.seq + i) * dims.seq + j;
-    if (j > i) {
+    let slot = (h * dims.queries + i) * dims.keys + j;
+    if (j > i + dims.queryBegin) {
         out[slot] = NEG_LARGE;
         return;
     }
@@ -110,16 +126,16 @@ ${readCache(dtype, 'v')}
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let perRow = dims.heads * dims.headDim;
-    if (gid.x >= perRow || gid.y >= dims.seq) {
+    if (gid.x >= perRow || gid.y >= dims.queries) {
         return;
     }
     let i = gid.y;
     let h = gid.x / dims.headDim;
     let d = gid.x % dims.headDim;
     let kvHead = h / (dims.heads / dims.kvHeads);
-    let wBase = (h * dims.seq + i) * dims.seq;
+    let wBase = (h * dims.queries + i) * dims.keys;
     var acc = 0.0;
-    for (var j = 0u; j <= i; j = j + 1u) {
+    for (var j = 0u; j <= i + dims.queryBegin; j = j + 1u) {
         acc = acc + weights[wBase + j] * vAt((j * dims.kvHeads + kvHead) * dims.headDim + d);
     }
     out[i * perRow + gid.x] = acc;
@@ -289,10 +305,10 @@ function spec(name: string, code: string, bindings: readonly ('read' | 'read_wri
 }
 
 export function attnScoresSpec(dtype: CacheDType): KernelSpec {
-  return spec(`attn_scores_${dtype}`, attnScoresCode(dtype), ['read', 'read', 'read_write', 'uniform'], 16, 16);
+  return spec(`attn_scores_${dtype}`, attnScoresCode(dtype), ['read', 'read', 'read_write', 'uniform'], 32, 16);
 }
 export function attnApplySpec(dtype: CacheDType): KernelSpec {
-  return spec(`attn_apply_${dtype}`, attnApplyCode(dtype), ['read', 'read', 'read_write', 'uniform'], 16, 64);
+  return spec(`attn_apply_${dtype}`, attnApplyCode(dtype), ['read', 'read', 'read_write', 'uniform'], 32, 64);
 }
 export function attnScoresDecodeSpec(dtype: CacheDType): KernelSpec {
   return spec(`attn_scores_decode_${dtype}`, attnScoresDecodeCode(dtype), ['read', 'read', 'read_write', 'uniform'], 32, 64);

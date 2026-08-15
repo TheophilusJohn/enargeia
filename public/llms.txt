@@ -5,7 +5,8 @@
 
 Measured on an Apple M2, headless Chromium: decode 45.5 tok/s at a 512-token context and
 43.1 at 2048, prefill 1105 tok/s at 128 tokens, 334.9 MiB of weights resident against
-1884.6 MiB for the same model in fp32. Perplexity 36.21 against 31.90 in fp32 over 1,256
+1884.6 MiB for the same weights in fp32, and 458.0 MiB live including the KV cache and
+activation scratch. Perplexity 36.21 against 31.90 in fp32 over 1,256
 held-out positions. No inference happens on a server.
 
 ## Documents

@@ -1081,3 +1081,113 @@ exactly the line the design system draws. Those moved to `--dim`.
 Checked on an iPhone 14 Pro profile: no horizontal overflow at 393 px, and the pinned pipeline
 section drops its pin below 760 px, because holding the viewport for seven screens of scroll on
 a phone is hostile rather than controlled.
+
+---
+
+# M7 deploy — residency, and the first load numbers that were never real
+
+## Prefill scratch was sized to the longest prompt it might ever see
+
+`npm run residency` lists live allocations rather than inferring them. The claim to check was
+that peak residency is dominated by the two `heads × maxSeq × maxSeq` attention buffers.
+
+| buffer | requested | capacity |
+|---|---|---|
+| `scores` | 224.0 MiB | **256.0 MiB** |
+| `attn_weights` | 224.0 MiB | **256.0 MiB** |
+| `mlp_gate` / `mlp_up` / `mlp_silu_mul` | 38.0 MiB each | 64.0 each |
+| eight `seq × hidden` buffers | 7.0 MiB each | 8.0 each |
+
+**Confirmed: 512 MiB of 773.8 is the two attention buffers.** A second finding came free —
+**151.1 MiB of the 773.8 is size-class rounding**, because the pool rounds to powers of two and
+224 MiB rounds to 256.
+
+This is the M6 over-dispatch bug in a different resource: sizing to a build-time maximum rather
+than the extent actually in play. The fix is the same shape — prefill runs in chunks of 256
+queries against the whole cached prefix, so the score tensors are `heads × 256 × context`.
+
+| | scratch | resident total |
+|---|---|---|
+| one shot, sized to 2048 | 773.8 MiB | 1132.6 MiB |
+| **chunked at 256** | **99.1 MiB** | **458.0 MiB** |
+
+## The prediction about speed was wrong twice, and the answer is "no change"
+
+Prefill time fits `ms = 0.87·N + 1.86e-4·N²`, which puts 30.4% of a 2048-token prefill in the
+quadratic term. Chunking replaces the full square with a triangle, so the fit predicted a **13%
+speedup**. The first measurement after building said **10% slower**. Both were wrong, and the
+second was wrong for an embarrassing reason: it compared a number from this session against one
+recorded in a previous session, and run-to-run variance on this measurement is about 8%.
+
+Measured properly — one session, sweeping chunk size, with `chunk = 2048` as the control that
+reproduces the old one-shot path exactly:
+
+| chunk | prefill @2048 | vs one-shot | scratch |
+|---|---|---|---|
+| 128 | 2975 ms | +0.6% | 50.9 MiB |
+| **256** | **2894 ms** | **−2.1%** | **99.1 MiB** |
+| 512 | 2925 ms | −1.1% | 195.5 MiB |
+| 1024 | 2935 ms | −0.8% | 388.3 MiB |
+| 2048 (control) | 2957 ms | — | 773.8 MiB |
+
+**Flat.** A 2.7% spread across a 16× range of chunk sizes, with no ordering — it is noise.
+Chunking costs nothing and returns 87% of the scratch. The predicted 13% speedup did not appear
+because the model over-credited the square-to-triangle saving: the masked half of the square
+already skipped its dot product and paid only a store.
+
+Correctness: greedy output is identical at chunk 256, 64 and 37 (a ragged last chunk), and the
+attention kernels have unit tests asserting a strip at `queryBegin > 0` reproduces the matching
+rows of the full square. Parity 387/387, `npm run session` 10/10.
+
+**The mobile 1024-token context is withdrawn.** It existed because scratch was 773.8 MiB; at
+99.1 MiB, halving the context would save about 58 MiB of a 458 MiB footprint and cost half the
+usable conversation.
+
+## Every load number in this file before now was measured over loopback
+
+M2 said 2.51 s cold, and said in the same paragraph that this was the floor rather than the
+experience. It was worse than that: loopback hid a design fault, because it made a round trip
+free.
+
+The `.enargeia` container stores three arrays per quantized tensor — packed values, scales,
+zero points — so the model is **630 byte ranges**, and the loader fetched them **one at a time**.
+It also never touched the Cache API on the quantized path, which the fp32 path had used since
+M2. Measured against R2 through a custom domain:
+
+| | requests | cold | warm |
+|---|---|---|---|
+| as first deployed | 630 serial | **78.3 s** | 75.7 s (no caching at all) |
+| + 8 concurrent, + Cache API | 630 | 58.8 s | **1.5 s** |
+| + concurrency 24 | 630 | 50.7 s | — |
+| **+ coalesced into 16 MiB spans** | **17** | **14.6 s** | **1.4 s** |
+
+Concurrency alone stalled at 7 MB/s against a link measured at 25–30 MB/s from the same browser,
+which ruled out bandwidth, the Cache API (identical with `noCache`), and the browser. The
+progress readout was the clue: 178 MB arrived in the first 10 seconds and the remaining 173 took
+44 — a large-tensor phase followed by a long tail of small ones. Coalescing adjacent ranges into
+16 MiB spans turns 630 requests into 17 and reaches **28.7 MB/s**, matching raw fetch throughput.
+
+**Cold first load, R2 over Cloudflare's CDN: 14.6 s from clicking Load to a first token**, of
+which 0.11 s is the model producing that token. Second visit: **1.4 s and two requests**, both
+of them header reads.
+
+A third bug fell out of the same measurement. The progress readout summed *per-request*
+durations to compute a rate, which is correct for a serial loader and badly wrong for a
+concurrent one — eight overlapping one-second requests sum to eight seconds of "network time".
+A visitor was told **16 minutes remained on a 54-second download**. It now measures wall clock,
+with a regression test.
+
+## What the site says about memory now
+
+The headline number was "335 MiB resident", and live residency was 1132.6. Both figures were
+real and the sentence joining them was not: 334.9 MiB is the weights, and the fp32 figure it is
+compared against is also weights-only. The page now states the weights, the live total, and the
+itemisation:
+
+| | |
+|---|---|
+| weights (int4, int8 embedding) | 334.9 MiB |
+| KV cache at 2048, f16 | 24.0 MiB |
+| activation scratch | 99.1 MiB |
+| **live residency** | **458.0 MiB** |
+| the same weights in fp32 | 1884.6 MiB |

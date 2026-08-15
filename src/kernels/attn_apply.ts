@@ -7,14 +7,14 @@ export const ATTN_APPLY: KernelSpec = {
   code,
   bindings: ['read', 'read', 'read_write', 'uniform'],
   workgroupSize: [64, 1, 1],
-  uniformBytes: 16,
+  uniformBytes: 32,
 };
 
 export function attnApplyWorkgroups(
-  seq: number,
+  queries: number,
   heads: number,
   headDim: number,
 ): [number, number, number] {
   const [x] = coverage(ATTN_APPLY, [heads * headDim, 1, 1]);
-  return [x, seq, 1];
+  return [x, queries, 1];
 }
