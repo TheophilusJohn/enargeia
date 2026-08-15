@@ -1191,3 +1191,45 @@ itemisation:
 | activation scratch | 99.1 MiB |
 | **live residency** | **458.0 MiB** |
 | the same weights in fp32 | 1884.6 MiB |
+
+## Deployed
+
+`enargeia.dev`, Cloudflare Pages, weights from R2 at `models.enargeia.dev`. Measured against
+the live site, not a preview server:
+
+| | |
+|---|---|
+| cold first load → first token | **15.4 s** |
+| second visit → first token | **1.5 s** |
+| time to first token, engine warm | **0.20 s** |
+| decode, sampled, foreground tab | **38.2 tok/s** |
+| live residency | 458.0 MiB |
+
+Per-kernel share on the live site, from `timestamp-query`: projection 60.8%, tied LM head
+24.7%, sample 9.3%, attention 2.6%, rmsnorm 1.1%, mlp 1.0%, rope 0.6%.
+
+Lighthouse against the live URL, mobile preset, **median of three runs** — `npm run lighthouse`:
+
+| | median | runs |
+|---|---|---|
+| performance | **98** | 100, 98, 95 |
+| accessibility | **100** | |
+| best practices | **100** | |
+| SEO | **100** | |
+| FCP | 1717 ms | 823, 1717, 1735 |
+| TBT | 14 ms | 14, 0, 14 |
+
+The median matters here. Single runs of the same deployment scored **88 and 84**, and speed
+index ranged from 1217 ms to 4208 across three runs — a live site over a real network is far
+noisier than a preview server, and one run of it is not a measurement. That is the third time
+in this project that a single sample nearly became a conclusion: the M6 f16 prediction, the
+"chunking is 10% slower" reading earlier in this milestone, and this. The harness now takes
+a median by default.
+
+Two deployment faults worth recording, both invisible until the site was actually served:
+
+- **Pages had no build step configured**, so it published the repository as-is and the browser
+  refused `/src/main.ts` as `video/mp2t`. The page had been a blank `#app` on every deploy since
+  the project was created; nobody noticed because until now it was a scaffold.
+- **`vite build` copies `public/` wholesale**, so `dist/` carried every `.enargeia` file in
+  `public/models/` — up to 2 GB, against a Pages limit of 25 MiB per file.

@@ -22,7 +22,8 @@
     "decode": "node tools/decode.mjs",
     "ablation": "node tools/ablation.mjs",
     "speculate:estimate": "ENARGEIA_PARITY=1 npx vitest run test/parity/speculation_estimate.test.ts --reporter=verbose --testTimeout=1800000",
-    "residency": "node tools/residency.mjs"
+    "residency": "node tools/residency.mjs",
+    "lighthouse": "bash tools/lighthouse.sh"
   },
   "devDependencies": {
     "@types/three": "^0.185.4",
