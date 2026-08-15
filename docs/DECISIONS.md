@@ -989,3 +989,24 @@ may never appear outside a chart.
 
 `tools/make-icons.mjs` generates the SVG and every raster, so the apple-touch-icon and the
 manifest icons cannot drift from the favicon.
+
+### 83. Nested scroll containers carry `data-lenis-prevent`
+
+**Chosen:** the attribute on the inspector, the chat transcript, and the composer textarea,
+plus a check that finds any scrollable element lacking it.
+**Rejected:** dropping Lenis; reconfiguring it to ignore events inside scrollable ancestors,
+which is what the attribute already does.
+**Decided by:** Lenis takes wheel events on `window`, so a nested container only scrolls if it
+is excluded. Verified by removing the attribute and watching the reported bug reappear —
+container 0 → 0, page 835 → 1074 — rather than by assuming the fix worked.
+
+The pinned section needs the opposite guarantee and is asserted separately: wheeling over it
+must move the page, because the page's scroll position is the scrub.
+
+### 84. Behavioural checks, not only visual ones
+
+**Chosen:** `tools/scroll-check.mjs`, run at the end of `npm run sweep`.
+**Decided by:** the wheel bug survived a five-width, two-engine visual sweep, because a
+container that can only be dragged looks identical to one that scrolls. Screenshots cannot
+falsify a claim about event routing. The check runs with trusted input and starts from an
+injected fault, so it has been shown to fail before being trusted to pass.

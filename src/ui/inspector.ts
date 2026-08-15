@@ -300,7 +300,16 @@ export function devicePanel(
 }
 
 export class Inspector {
-  readonly root = el('aside', { class: 'inspector', 'aria-label': 'Live inspector' });
+  /**
+   * `data-lenis-prevent` because Lenis takes wheel events on `window` and applies them to the
+   * page, so a nested overflow container never sees them: this panel could only be scrolled by
+   * dragging its scrollbar. The attribute tells Lenis to leave events inside it alone.
+   */
+  readonly root = el('aside', {
+    class: 'inspector',
+    'aria-label': 'Live inspector',
+    'data-lenis-prevent': '',
+  });
   private readonly panels: Array<{ update(t: Telemetry): void }>;
 
   constructor(options: {

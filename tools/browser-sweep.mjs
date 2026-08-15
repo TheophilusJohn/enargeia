@@ -6,9 +6,15 @@
 // below catch the classes of fault a screenshot review misses: horizontal overflow, undersized
 // tap targets, console errors. The screenshots are for everything else.
 //
+// It finishes by running tools/scroll-check.mjs, which wheels over every nested scroll
+// container and asserts the container moved and the page did not. That class of bug — Lenis
+// swallowing wheel events so a panel can only be dragged by its scrollbar — is invisible to
+// every screenshot, which is how it survived this sweep twice.
+//
 //   node tools/browser-sweep.mjs                 # local preview
 //   URL=https://enargeia.dev/ node tools/browser-sweep.mjs
 //   REDUCED=1 node tools/browser-sweep.mjs       # prefers-reduced-motion
+//   SKIP_SCROLL=1 node tools/browser-sweep.mjs   # visual pass only (the scroll pass loads the model)
 import { webkit } from 'playwright';
 const TARGET = process.env.URL ?? 'http://localhost:4180/';
 const OUT = process.env.OUT ?? '.sweep';
@@ -119,4 +125,15 @@ for (const view of VIEWS) {
   console.log(`\n${view.label} ${view.width}x${view.height}: ${sections.length} sections`);
   console.log(problems.length ? problems.map((p) => '  ' + p).join('\n') : '  (no automatic problems)');
   await browser.close();
+}
+
+// The scroll pass needs a loaded session, so it runs once at one width rather than per viewport.
+if (!process.env.SKIP_SCROLL) {
+  const { spawnSync } = await import('node:child_process');
+  console.log('\n--- wheel over nested scroll containers ---');
+  const result = spawnSync('node', ['tools/scroll-check.mjs'], {
+    stdio: 'inherit',
+    env: { ...process.env, URL: TARGET },
+  });
+  if (result.status !== 0) process.exitCode = 1;
 }

@@ -17,16 +17,21 @@ const SUGGESTIONS = [
 
 export class Chat {
   readonly root = el('section', { class: 'chat' });
+  // `data-lenis-prevent` on every nested scroller: Lenis handles wheel events at the window and
+  // would otherwise scroll the page instead of the container under the pointer.
   private readonly transcript = el('div', {
     class: 'transcript',
     role: 'log',
     'aria-live': 'polite',
     'aria-label': 'Conversation',
+    'data-lenis-prevent': '',
   });
   private readonly input = el('textarea', {
     rows: '1',
     placeholder: 'Ask it something — everything runs on your GPU',
     'aria-label': 'Message',
+    // Scrolls internally once a message passes its max height.
+    'data-lenis-prevent': '',
   });
   private readonly send = el('button', { class: 'primary', type: 'button', text: 'Send' });
   private readonly stop = el('button', { type: 'button', text: 'Stop' });

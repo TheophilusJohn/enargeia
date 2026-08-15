@@ -1339,3 +1339,46 @@ its own without the page referencing it, so a request during propagation cached 
 against it, exactly as had happened to a JavaScript chunk. It revalidated and healed on its own.
 The sweep's preflight now checks every referenced file, plus the icons named in the manifest,
 against the content type each should have.
+
+## Wheel events over nested scroll containers
+
+Lenis handles wheel events on `window` and applies them to the page, so a nested
+`overflow-y: auto` container never receives them. The inspector and the chat transcript could
+only be scrolled by dragging their scrollbars. `data-lenis-prevent` on each fixes it.
+
+Confirmed by fault injection rather than by assertion. `STRIP=1 node tools/scroll-check.mjs`
+removes the attribute before testing and reproduces the reported bug exactly:
+
+| container | wheel 240 over it | page |
+|---|---|---|
+| `.transcript`, attribute stripped | 0 → **0** | 835 → **1074** |
+| `.inspector`, attribute stripped | 0 → **0** | 1075 → **1314** |
+| `.transcript`, shipping | 0 → **240** | 835 → 835 |
+| `.inspector`, shipping | 0 → **240** | 835 → 835 |
+
+**The pinned section is unaffected, and that is checked as the opposite assertion.** Wheeling
+over `#how` *must* move the page, because that is what drives the scrub — a stray
+`data-lenis-prevent` there would freeze it. It passes with the attributes stripped and with
+them present: page 4076 → 4576, stage embedding → projection, `position: fixed` throughout, in
+Chromium and WebKit. Lenis, ScrollTrigger pinning and a nested scroll area coexist.
+
+Two notes on how the check is built, because both were wrong first:
+
+- It uses `page.mouse.wheel`, which sends input through the browser's real event pipeline. A
+  `new WheelEvent(...)` dispatched from JavaScript proves nothing: untrusted events do not
+  trigger the default scrolling action, so a correct container would never move — while Lenis,
+  being ordinary JavaScript, would still react. Only trusted input separates the two cases.
+- It fills the transcript directly instead of generating replies. What is under test is where a
+  wheel event is routed, which has nothing to do with the model, and generating two replies took
+  a minute on a healthy GPU and never finished on a sick one.
+
+## An environment note, recorded so a future measurement is not misread
+
+While building the check, decode measured **0.2 tok/s** — against 34–38 measured on the same
+machine and the same deployment an hour earlier. It was not a regression: the adapter reported
+`architecture: "swiftshader"` and `shader-f16: absent`, so **Chromium had fallen back to its
+software rasterizer**. Every performance figure in this file was taken on the hardware adapter,
+where the device panel reports f16 present.
+
+Worth checking `navigator.gpu.requestAdapter().info.architecture` before believing any decode
+number that looks two orders of magnitude wrong.
