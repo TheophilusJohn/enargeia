@@ -26,10 +26,9 @@
  * to detect anything.
  */
 
-import { chromium, webkit } from 'playwright';
+import { launchChecked, adapterOf } from './launch.mjs';
 
 const TARGET = process.env.URL ?? 'http://localhost:5179/';
-const ENGINE = process.env.ENGINE === 'webkit' ? webkit : chromium;
 
 /** Every element that can actually scroll, whether or not anyone remembered to tag it. */
 const FIND_SCROLLERS = `(() => {
@@ -56,14 +55,15 @@ const FIND_SCROLLERS = `(() => {
   return found;
 })()`;
 
-const browser = await ENGINE.launch(
-  ENGINE === chromium ? { args: ['--enable-unsafe-webgpu'] } : {},
-);
+const { browser, label } = await launchChecked();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await context.newPage();
 page.on('pageerror', (error) => console.log(`[pageerror] ${error.message}`));
 
 await page.goto(TARGET, { waitUntil: 'domcontentloaded' });
+// Reported alongside the result: a check that ran on a software adapter is still a valid check
+// of event routing, but it should say which browser and which adapter produced it.
+console.log(`${label} — adapter ${JSON.stringify(await adapterOf(page))}`);
 
 // The chat transcript and the inspector only exist once a session does.
 const loadButton = page.locator('#app button.primary');

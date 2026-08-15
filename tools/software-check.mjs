@@ -18,14 +18,11 @@
  *   ENGINE=webkit node tools/software-check.mjs
  */
 
-import { chromium, webkit } from 'playwright';
+import { launchChecked } from './launch.mjs';
 
 const TARGET = process.env.URL ?? 'http://localhost:4180/';
-const ENGINE = process.env.ENGINE === 'webkit' ? webkit : chromium;
-
-const browser = await ENGINE.launch(
-  ENGINE === chromium ? { args: ['--enable-unsafe-webgpu'] } : {},
-);
+const { browser, label } = await launchChecked();
+console.log(`engine: ${label}`);
 
 /** Load the app and report what the warning surfaces say. */
 async function inspect(url) {

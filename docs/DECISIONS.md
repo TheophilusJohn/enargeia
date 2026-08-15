@@ -1046,3 +1046,18 @@ about four verbose turns, which is a worse failure than losing the oldest exchan
 The reported diagnosis — missing stop-token handling — was not the cause; stop handling works
 and 19 of 24 generations used it. Worth recording because the fix that followed from measuring
 is a different fix from the one the symptom suggested.
+
+### 87. Reply cap 256, and the checks drive installed Chrome
+
+**Chosen:** `MAX_REPLY_TOKENS = 256`; behavioural checks launch installed Chrome by default.
+**Decided by:** the cap bounds the duration of a failure. At 512 a runaway rambled for about
+17 seconds, which reads as broken whatever the notice under it says; at 256 the longest measured
+generation is 9.1 s. Twice as many replies are truncated (10 of 24 against 5) and that cost is
+recorded rather than glossed — the extra five are replies that ran 256–512 tokens and would have
+ended on their own. Median length when a reply stops properly is 28 tokens, so the ceiling is
+far from any good answer.
+
+The browser choice is the same kind of correction. "Chromium fell back to SwiftShader" was true
+of exactly one launcher in one mode: bundled Chromium headless. Installed Chrome, headless or
+headed, gets `metal-3` with f16, and so does the bundled build headed. The checks now run what
+visitors run, and print the adapter beside every result.

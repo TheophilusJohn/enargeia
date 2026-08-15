@@ -1463,3 +1463,54 @@ Both notices are only reachable by chance — ten turns through the real UI prod
 id is the stop token, and no stop token appears before it. Every other test in that file
 generates a fixed count, so a session that ignored its stop tokens entirely would have passed
 all of them. It stops after 8 tokens of 200 — "The capital of France is Paris."
+
+## Reply cap lowered to 256
+
+The cap is a bound on how long a failure lasts, not on how long an answer can be. Same 24
+generations, same seeds and prompts, at each cap:
+
+| | cap 512 | **cap 256** |
+|---|---|---|
+| ran to the cap | 5 / 24 | **10 / 24** |
+| longest generation | ~17 s | **9.1 s** |
+| capped generations | — | 6.7–9.1 s |
+| median tokens when it stopped properly | — | **28** |
+
+**The cost is real and worth stating: twice as many replies are truncated.** The five extra are
+the ones that ran between 256 and 512 tokens — they would have terminated on their own, so
+lowering the cap cut them off. The case for doing it anyway is the other two rows: a runaway is
+now eight seconds instead of seventeen, and a median useful reply is 28 tokens, so the ceiling
+is nowhere near a good answer.
+
+## Which browser was on SwiftShader, exactly
+
+The earlier note that "Chromium fell back to its software rasterizer" was too broad. Measured
+across four launchers on the same machine, same minute:
+
+| launcher | adapter | shader-f16 |
+|---|---|---|
+| Playwright's bundled Chromium, **headless** | `swiftshader` | no |
+| Playwright's bundled Chromium, headed | `metal-3` | yes |
+| installed Chrome, headless | `metal-3` | yes |
+| installed Chrome, headed | `metal-3` | yes |
+
+**One binary in one mode**, not the machine and not anything a visitor would meet. The
+behavioural checks now launch installed Chrome by default — hardware WebGPU, and the engine most
+visitors use — falling back to the bundled build only when Chrome is absent. `tools/launch.mjs`
+holds that choice and both checks print the adapter they ran against, so a result can never
+again be read without knowing which GPU produced it.
+
+`npm run sweep` against the live site, behavioural checks on Chrome/`metal-3`:
+
+```
+preflight: 10 referenced files served correctly
+desktop / laptop / tablet / mobile / mobile-small — no automatic problems
+pass  div.transcript   container 0→240  page 835→835
+pass  aside.inspector  container 0→240  page 835→835
+pass  #how (pinned)    page 4076→4576  stage embedding→projection  position fixed
+pass  forced software     — warning on all three surfaces
+pass  adapter as reported — silent, arch metal-3
+```
+
+The software-rasterizer check's negative case is now exercised against a genuinely healthy
+Chrome adapter rather than only in WebKit, which is what it needed.

@@ -57,11 +57,16 @@ export const MAX_CONTEXT = 2048;
  * Longest single reply.
  *
  * A 0.5B model does not reliably emit `<|im_end|>`: measured over 24 generations on the chat
- * template, 19 stopped on it and **5 ran to this cap**. The cap is what keeps a runaway from
- * eating the whole context, and when it is what ended a reply the chat says so rather than
- * presenting a truncated answer as a finished one.
+ * template, 19 stopped on it and 5 ran to the cap. The cap is what bounds a runaway, and when it
+ * is what ended a reply the chat says so rather than presenting a truncated answer as finished.
+ *
+ * 256 rather than 512, because the cap is really a bound on how long the failure lasts. At the
+ * measured 30 tok/s a runaway spent about 17 seconds visibly rambling, which reads as broken
+ * whatever the notice underneath it says; 256 bounds that at about 8. Useful replies from this
+ * model are well under 100 tokens, so the ceiling almost never binds on a good answer — and
+ * shorter replies mean more turns before the context has to start evicting the oldest ones.
  */
-export const MAX_REPLY_TOKENS = 512;
+export const MAX_REPLY_TOKENS = 256;
 
 /**
  * `?maxReply=8` to force replies to hit the cap, and `?maxTurns=2` to force the trim.

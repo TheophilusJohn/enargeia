@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // `npm run sweep` — every section, five widths, in WebKit (Safari's engine).
 //
+// The visual pass is WebKit on purpose: the site was built in Chromium and the first person to
+// open it in Safari found a broken section. The behavioural checks that follow prefer installed
+// Chrome, which is what most visitors run — see tools/launch.mjs.
+//
 // This exists because the site was built and checked entirely in headless Chromium, and the
 // first person to open it in Safari found a broken section immediately. The automatic checks
 // below catch the classes of fault a screenshot review misses: horizontal overflow, undersized
