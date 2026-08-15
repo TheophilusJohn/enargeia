@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ channel: 'chromium', args: ['--enable-unsafe-webgpu'] });
+const page = await (await browser.newContext()).newPage();
+page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+page.on('console', (m) => console.log(`[${m.type()}]`, m.text().slice(0, 220)));
+page.on('requestfailed', (r) => console.log('[failed]', r.url().slice(0, 110), r.failure()?.errorText));
+await page.goto('https://enargeia.dev/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(3000);
+console.log('#app html:', (await page.locator('#app').innerHTML()).slice(0, 400));
+await browser.close();
