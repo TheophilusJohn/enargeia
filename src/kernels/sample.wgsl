@@ -45,7 +45,9 @@ struct Dims {
     _pad1: u32,
 };
 
-@group(0) @binding(0) var<storage, read>       logits:  array<f32>;
+// `read_write` because the repetition penalty is applied into this buffer once, in place,
+// rather than recomputed on every read. See the note above `applyRepetitionPenalty`.
+@group(0) @binding(0) var<storage, read_write> logits:  array<f32>;
 @group(0) @binding(1) var<storage, read>       history: array<u32>;
 @group(0) @binding(2) var<storage, read_write> out:     array<u32>;
 @group(0) @binding(3) var<uniform>             dims:    Dims;
@@ -71,25 +73,43 @@ fn chunkEnd(tid: u32, vocab: u32) -> u32 {
     return min((tid + 1u) * per, vocab);
 }
 
-/// The logit after the repetition penalty, which is applied before temperature so the penalty
-/// means the same thing at every temperature.
-fn adjusted(i: u32) -> f32 {
-    var value = logits[i];
-    if (dims.repetitionPenalty != 1.0) {
-        for (var h = 0u; h < dims.historyLength; h = h + 1u) {
-            if (history[h] == i) {
-                // Divide when positive, multiply when negative — dividing a negative logit
-                // would make the token *more* likely, which is the opposite of a penalty.
-                if (value > 0.0) {
-                    value = value / dims.repetitionPenalty;
-                } else {
-                    value = value * dims.repetitionPenalty;
-                }
+/// Apply the repetition penalty in place, once, before anything reads a logit.
+///
+/// The obvious formulation — a helper that penalizes a logit at the point of reading it — was
+/// what this kernel did first, and it is quadratic in the worst way: every read scans the whole
+/// history, and the vocabulary is read about 36 times (max, sum, 32 bisection steps, the draw).
+/// At a 500-token history that is 2.7 billion comparisons per token. Measured through the app
+/// it cost **26 ms/token against 71** — the penalty was 2.7× the entire rest of decoding.
+///
+/// Applied here instead, the cost is one pass over the history rather than 36 over the
+/// vocabulary, and every later read is a plain load.
+///
+/// Threads split the history. Only the first occurrence of an id applies the penalty, which is
+/// what the previous formulation did (it stopped at the first match) and what the reference
+/// does — it penalizes a set, not a multiset. That also means no two threads ever write the
+/// same address, so the in-place update needs no atomics.
+fn applyRepetitionPenalty(tid: u32) {
+    if (dims.repetitionPenalty == 1.0) {
+        return;
+    }
+    for (var h = tid; h < dims.historyLength; h = h + WG) {
+        let id = history[h];
+        var first = true;
+        for (var earlier = 0u; earlier < h; earlier = earlier + 1u) {
+            if (history[earlier] == id) {
+                first = false;
                 break;
             }
         }
+        if (first && id < dims.vocab) {
+            let value = logits[id];
+            // Divide when positive, multiply when negative — dividing a negative logit would
+            // make the token *more* likely, which is the opposite of a penalty.
+            logits[id] = select(value * dims.repetitionPenalty,
+                                value / dims.repetitionPenalty,
+                                value > 0.0);
+        }
     }
-    return value;
 }
 
 fn reduceMax(tid: u32, value: f32) -> f32 {
@@ -132,6 +152,12 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     if (tid == 0u) {
         atomicStore(&chosen, 0xFFFFFFFFu);
     }
+
+    // Before any read of a logit. The barriers are outside the helper so they sit in uniform
+    // control flow, and the storage barrier is what makes one thread's write visible to the
+    // rest of the workgroup.
+    applyRepetitionPenalty(tid);
+    storageBarrier();
     workgroupBarrier();
 
     // --- greedy ---------------------------------------------------------
@@ -140,7 +166,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
         var bestValue = -1.0e30;
         var bestIndex = 0u;
         for (var i = begin; i < end; i = i + 1u) {
-            let v = adjusted(i);
+            let v = logits[i];
             if (v > bestValue) {
                 bestValue = v;
                 bestIndex = i;
@@ -172,7 +198,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     var localMax = -1.0e30;
     var localArg = begin;
     for (var i = begin; i < end; i = i + 1u) {
-        let scaled = adjusted(i) / dims.temperature;
+        let scaled = logits[i] / dims.temperature;
         if (scaled > localMax) {
             localMax = scaled;
             localArg = i;
@@ -203,7 +229,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
 
     var localSum = 0.0;
     for (var i = begin; i < end; i = i + 1u) {
-        localSum = localSum + exp(adjusted(i) / dims.temperature - sharedMax);
+        localSum = localSum + exp(logits[i] / dims.temperature - sharedMax);
     }
     let total = reduceSum(tid, localSum);
     if (tid == 0u) { sharedSum = total; }
@@ -219,7 +245,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
             let mid = (lo + hi) * 0.5;
             var localMass = 0.0;
             for (var i = begin; i < end; i = i + 1u) {
-                let p = exp(adjusted(i) / dims.temperature - sharedMax) / sharedSum;
+                let p = exp(logits[i] / dims.temperature - sharedMax) / sharedSum;
                 if (p >= mid) {
                     localMass = localMass + p;
                 }
@@ -241,7 +267,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     // the nucleus rather than the full distribution is what top-p means.
     var localKept = 0.0;
     for (var i = begin; i < end; i = i + 1u) {
-        let p = exp(adjusted(i) / dims.temperature - sharedMax) / sharedSum;
+        let p = exp(logits[i] / dims.temperature - sharedMax) / sharedSum;
         if (p >= sharedThreshold) {
             localKept = localKept + p;
         }
@@ -259,7 +285,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     // contiguous and in id order, this is the same token a sequential scan would pick.
     var mine = 0.0;
     for (var i = begin; i < end; i = i + 1u) {
-        let p = exp(adjusted(i) / dims.temperature - sharedMax) / sharedSum;
+        let p = exp(logits[i] / dims.temperature - sharedMax) / sharedSum;
         if (p >= sharedThreshold) {
             mine = mine + p;
         }
@@ -282,7 +308,7 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
 
     var running = reduce[tid];
     for (var i = begin; i < end; i = i + 1u) {
-        let p = exp(adjusted(i) / dims.temperature - sharedMax) / sharedSum;
+        let p = exp(logits[i] / dims.temperature - sharedMax) / sharedSum;
         if (p >= sharedThreshold) {
             running = running + p;
             if (running >= sharedTarget) {

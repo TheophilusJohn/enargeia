@@ -4,10 +4,344 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>enargeia</title>
+    <title>Enargeia — a language model running on your own GPU</title>
+    <meta
+      name="description"
+      content="A browser-native LLM inference engine. Hand-written WGSL compute kernels, int4 weights, no ML framework. Qwen2.5-0.5B decodes at 43.1 tokens per second in 335 MiB, entirely client-side."
+    />
+    <meta name="theme-color" content="#05050A" />
+    <meta property="og:title" content="Enargeia" />
+    <meta
+      property="og:description"
+      content="A language model running on your own GPU. Hand-written WGSL kernels, int4 weights, 335 MiB resident, no server inference."
+    />
+    <meta property="og:type" content="website" />
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/space-grotesk-latin.woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/jetbrains-mono-latin.woff2"
+      crossorigin
+    />
+
+    <style>
+      /* Enough to paint the page correctly before the module bundle arrives. */
+      :root { --bg: #05050a; --ink: #f5f5fa; }
+      html { background: #05050a; color-scheme: dark; }
+      body { margin: 0; background: #05050a; color: #f5f5fa;
+             font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    </style>
   </head>
+
   <body>
-    <div id="app"></div>
+    <header class="masthead">
+      <span class="wordmark">Enargeia</span>
+      <nav aria-label="Sections">
+        <a href="#demo">Demo</a>
+        <a href="#how">How</a>
+        <a href="#measured">Measured</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/TheophilusJohn/enargeia">Source</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero ------------------------------------------------------------ -->
+      <section class="hero">
+        <canvas id="hero-canvas" aria-hidden="true"></canvas>
+        <div class="wrap hero-copy">
+        <p class="eyebrow">Browser-native inference · WebGPU</p>
+        <h1>A language model, running on your own graphics card.</h1>
+        <p class="lede">
+          Enargeia loads a 0.5-billion-parameter model into your GPU and generates text there.
+          The compute kernels are hand-written WGSL in this repository — no ONNX Runtime, no
+          transformers.js, no WebGPU wrapper. <strong>Nothing you type is sent anywhere, because
+          there is no server to send it to.</strong>
+        </p>
+
+        <div class="stat-row">
+          <div class="stat">
+            <div class="n">43.1</div>
+            <div class="l">tokens/sec decoding at a 2048-token context — and 45.5 at 512, which
+              is the point</div>
+          </div>
+          <div class="stat">
+            <div class="n">335 <span style="font-size: 0.5em">MiB</span></div>
+            <div class="l">resident on the GPU. The same model in fp32 takes 1884.6</div>
+          </div>
+          <div class="stat">
+            <div class="n">1105</div>
+            <div class="l">tokens/sec reading your prompt, int4, at 128 tokens</div>
+          </div>
+          <div class="stat">
+            <div class="n">0</div>
+            <div class="l">bytes of inference sent to a server. There is no inference backend</div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <!-- Demo ------------------------------------------------------------ -->
+      <section id="demo" class="wrap">
+        <p class="eyebrow">Run it</p>
+        <h2>The machinery is visible while it runs.</h2>
+        <p class="prose" style="margin-bottom: 28px">
+          Loading fetches 335 MiB of int4 weights, once, and caches them. The panel on the right
+          reads the same telemetry the engine publishes to itself: GPU time per kernel from
+          <code>timestamp-query</code>, cache occupancy, the memory ledger, and attention weights
+          as they are computed.
+        </p>
+        <div id="app"></div>
+        <p class="note" style="max-width: var(--measure); margin-top: 14px">
+          The throughput you see here will read lower than the 45.5 tok/s in the table below,
+          and should. That figure is greedy decode in a headless browser with nothing else on
+          the GPU; this is sampled decode in a foreground tab sharing the GPU with the
+          compositor, and the page itself costs about 4 ms per token. Measured on an M2:
+          <b>34 tok/s</b> here against 45.5 there.
+        </p>
+      </section>
+
+      <!-- Claims ---------------------------------------------------------- -->
+      <section class="wrap" style="border-top: 0; padding-top: 0">
+        <div class="claim">
+          <p class="say">It reads every weight in the model to write one word.</p>
+          <p class="fig">
+            <b>494.0M parameters</b> · <b>412 dispatches</b> per token · 24 layers · one GPU→CPU
+            readback, carrying a single token id
+          </p>
+        </div>
+
+        <div class="claim">
+          <p class="say">Four bits per weight, unpacked in registers and never written down.</p>
+          <p class="fig">
+            <b>334.9 MiB</b> against <b>1884.6 MiB</b> in fp32 — <b>5.63×</b> smaller. Blocks of
+            64 along the reduction axis, each with its own scale and zero point. Dequantizing
+            into a buffer would move the same bytes the quantization exists to avoid
+          </p>
+        </div>
+
+        <div class="claim">
+          <p class="say">A long conversation costs no more per word than a short one.</p>
+          <p class="fig">
+            <b>43.1 tok/s at 2048</b> against 45.5 at 512. The position-dependent term measured
+            <b>−0.15 µs/position</b>, indistinguishable from zero; before the attention kernel
+            stopped walking history one position per thread it was <b>+3.89</b>
+          </p>
+        </div>
+
+        <div class="claim">
+          <p class="say">The output is identical every time you run it.</p>
+          <p class="fig">
+            Greedy decode reproduces HuggingFace's tokens exactly, and prefill-then-decode
+            reproduces the no-cache path <b>24 of 24</b>. Non-determinism is treated as a
+            correctness bug, not as noise — it is almost always a missing
+            <code>workgroupBarrier()</code>
+          </p>
+        </div>
+
+        <div class="claim">
+          <p class="say">And it is a small model, so it is not very good.</p>
+          <p class="fig">
+            Perplexity <b>36.21</b> against <b>31.90</b> for the same weights in fp32, over 1,256
+            held-out positions. Quantization costs about 13.5%; being a 0.5B model costs far more
+            than that
+          </p>
+        </div>
+      </section>
+
+      <!-- Pipeline -------------------------------------------------------- -->
+      <section id="how" class="wrap">
+        <p class="eyebrow">One decode step</p>
+        <h2>412 compute passes, in the order they are encoded.</h2>
+        <p class="prose">
+          This is the dispatch list, not a diagram of a transformer — it is what
+          <code>graph_decode.ts</code> builds once at load and re-encodes for every token. On a
+          device with <code>shader-f16</code> there are 460, because caching K and V in half
+          precision adds a pack dispatch per layer.
+        </p>
+        <div id="pipeline-stages"></div>
+      </section>
+
+      <!-- Measured -------------------------------------------------------- -->
+      <section id="measured" class="wrap">
+        <p class="eyebrow">Measured, not asserted</p>
+        <h2>Every number here was measured, including the ones that went the wrong way.</h2>
+        <p class="prose">
+          Full method and history in
+          <a href="https://github.com/TheophilusJohn/enargeia/blob/main/BENCH.md">BENCH.md</a>.
+          Device: Apple M2, headless Chromium over CDP, so kernels are compared like for like. A
+          foreground tab shares the GPU with the compositor and measures about 15% lower — the
+          demo above is the honest number for what you will see.
+        </p>
+
+        <table class="bench">
+          <caption class="visually-hidden">Throughput and memory, int4 against fp32</caption>
+          <thead>
+            <tr>
+              <th scope="col">Measurement</th>
+              <th scope="col" class="n">int4</th>
+              <th scope="col" class="n">fp32 *</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>decode, 512-token context</td><td class="n">45.5 tok/s</td><td class="n">26.9</td></tr>
+            <tr><td>decode, 2048-token context</td><td class="n">43.1 tok/s</td><td class="n">21.6</td></tr>
+            <tr><td>prefill, 128 tokens</td><td class="n">1105 tok/s</td><td class="n">225</td></tr>
+            <tr><td>prefill, 2048 tokens</td><td class="n">797 tok/s</td><td class="n">212</td></tr>
+            <tr><td>time to first token, 32-token prompt</td><td class="n">219 ms</td><td class="n">—</td></tr>
+            <tr><td>weights resident</td><td class="n">334.9 MiB</td><td class="n">1884.6 MiB</td></tr>
+            <tr><td>KV cache at 2048, f16</td><td class="n">24.0 MiB</td><td class="n">48.0 MiB</td></tr>
+            <tr><td>perplexity, 1,256 held-out positions</td><td class="n">36.21</td><td class="n">31.90</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="max-width: var(--measure)">
+          * The fp32 decode figures are the M5 baseline and were not re-measured after the M6
+          kernel work. That work — right-sizing dispatch and parallelising the attention history
+          reduction — is independent of weight precision and would lift the fp32 column too, so
+          the decode comparison overstates int4's advantage. The prefill figures are both
+          post-fix and comparable. int4's genuine decode advantage, measured in the same era on
+          both sides, is 1.34× to 1.54×.
+        </p>
+
+        <div class="claim" style="border-top: 1px solid var(--line); margin-top: 40px">
+          <p class="say">The two biggest wins were not on the list of planned optimizations.</p>
+          <p class="fig">
+            Right-sizing prefill dispatch: <b>11.6×</b> at 128 tokens, from a graph that launched
+            5.5M workgroups whatever the prompt length. Parallelising the attention history
+            reduction: <b>+50.4%</b> decode at 2048. Of the five items actually planned, two
+            measured null, one had its premise refuted, and one was bounded below the noise floor
+            and skipped
+          </p>
+        </div>
+
+        <div class="claim">
+          <p class="say">A tiled matmul is worth five naive ones, and the fifth rung is where it
+            stops.</p>
+          <p class="fig">
+            219.4 → 518.2 → 838.9 → 870.8 → <b>1141.7 GFLOP/s</b> at 1024³. The 8×1 coarsened
+            kernel bought 4% over the 4×1 one; going 2D instead — a 4×2 register block, 0.75
+            shared loads per MAC — bought 36%
+          </p>
+        </div>
+      </section>
+
+      <!-- FAQ ------------------------------------------------------------- -->
+      <section id="faq" class="wrap">
+        <p class="eyebrow">Honestly</p>
+        <h2>What this is not.</h2>
+
+        <details>
+          <summary>Is the model any good?</summary>
+          <div class="prose">
+            <p>
+              No. Qwen2.5-0.5B-Instruct is roughly a thousandth the size of a frontier model and
+              behaves like it: it loses the thread over a few paragraphs, invents facts with
+              total confidence, and cannot do arithmetic reliably. If you want a good answer to
+              something, ask a frontier model. This page is about the engine underneath, which
+              would run a better model the same way if a better model fit in 335 MiB.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Should I use this in production?</summary>
+          <div class="prose">
+            <p>
+              No — use <a href="https://webllm.mlc.ai/">WebLLM</a>. It supports many more models,
+              is far better tested across devices, has real batching and grammar-constrained
+              output, and is maintained by people who do this full time. Enargeia exists because
+              writing the kernels is the interesting part, and because an engine you can read end
+              to end teaches you things a compiled runtime does not.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What does int4 actually cost in quality?</summary>
+          <div class="prose">
+            <p>
+              Perplexity goes from <strong>31.90 to 36.21</strong> on 1,256 held-out positions —
+              about 13.5% worse. An earlier, smaller evaluation over 95 positions measured 30.25
+              against 35.22; the larger sample is the one to trust, and it also corrected a sign
+              the smaller one had backwards.
+            </p>
+            <p>
+              An ablation on the tied embedding says where the damage is: keeping that one tensor
+              at int8 costs 66 MiB and recovers <strong>99.95%</strong> of what a full fp32
+              exemption recovers, so that is what ships. The remaining gap is spread across the
+              other 169 quantized tensors, and no amount of embedding precision touches it.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Why is the first load so large?</summary>
+          <div class="prose">
+            <p>
+              Because the weights are the model. 335 MiB is 494 million parameters at
+              four bits each, plus an int8 embedding table and the per-block scales. It is cached
+              after the first visit, so the second load takes about 1.5 seconds and no network
+              transfer at all.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Does my text leave the browser?</summary>
+          <div class="prose">
+            <p>
+              No. The only network requests this page makes are for the model file, the
+              tokenizer, and its own JavaScript. There is no inference backend, no analytics on
+              your input, and no request carrying anything you type. You can verify that in the
+              network tab, which is a better assurance than a privacy policy.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Why does it need WebGPU specifically?</summary>
+          <div class="prose">
+            <p>
+              Because the engine is compute shaders. WebGL has no compute stage, and WASM on the
+              CPU is roughly two orders of magnitude off for this shape of work. Chrome and Edge
+              113+, Safari 26+, and Firefox 141+ on Windows have it; where it is missing the page
+              says so and explains what it would have done.
+            </p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Why "enargeia"?</summary>
+          <div class="prose">
+            <p>
+              A term from ancient rhetoric for description vivid enough that the audience sees
+              the thing rather than hears about it. The whole point of the project is that the
+              machinery is visible while it runs.
+            </p>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap" style="padding: 0">
+        Enargeia · hand-written WGSL, int4 weights, no ML framework ·
+        <a href="https://github.com/TheophilusJohn/enargeia">source</a> ·
+        <a href="https://github.com/TheophilusJohn/enargeia/blob/main/BENCH.md">measurements</a> ·
+        <a href="https://github.com/TheophilusJohn/enargeia/blob/main/docs/DECISIONS.md">decisions</a>
+        <br />
+        Model weights are Qwen2.5-0.5B-Instruct, Apache 2.0, quantized offline.
+      </div>
+    </footer>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# 335 MB of model weights. Nothing here for a crawler, and fetching it repeatedly costs
+# real bandwidth on both ends.
+Disallow: /models/
+Disallow: /tokenizer.json
+
+Sitemap: https://enargeia.dev/sitemap.xml

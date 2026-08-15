@@ -835,3 +835,64 @@ the position-dependent term is gone, so halving the bytes of a term that costs n
 nothing. It remains worth 24 MiB against 48 at a 2048 context, at a 4% prefill cost. Recorded
 because a change whose justification has been invalidated twice should say so rather than keep
 inheriting the original claim.
+
+### 71. Repetition penalty applied once in place, not at every read
+
+**Chosen:** a first phase in `sample.wgsl` that writes penalized logits back into the logits
+buffer before anything reads one, with `logits` bound `read_write`.
+**Rejected:** the original per-read helper; a separate dispatch; a workgroup-resident bitset of
+the vocabulary (151,936 bits is 19 KB and does not fit in workgroup storage).
+**Decided by:** the helper scanned the whole history on every logit read, and the vocabulary is
+read about 36 times per token, so the cost was `vocab × history × 36`. **Measured through the
+app: 71.4 ms/token with the penalty alone against 26.7 greedy; 24.4 after the fix.** Full
+sampling went 84.9 → 28.6 ms/token, 3.0×.
+
+Only the first occurrence of an id applies the penalty, which is what the old code did (it
+broke at the first match) and what the reference does — it penalizes a set, not a multiset.
+That is also what makes the in-place write safe without atomics: no two threads target the same
+address.
+
+The cost was invisible to every harness in the repository because they all measure with
+`GREEDY`, and greedy skips the penalty. A cost that only appears under settings no test uses is
+not caught by adding more tests of the same kind — it was caught by running the engine the way
+a person would.
+
+### 72. The site owns one seam to the engine, and no panel crosses it
+
+**Chosen:** `src/ui/engine.ts` is the only file under `src/ui` that imports from `src/gpu`,
+`src/kernels`, `src/model` or `src/runtime`. Everything else renders a `Telemetry` snapshot the
+runtime publishes.
+**Rejected:** panels reading GPU buffers directly; a shared store both sides mutate.
+**Decided by:** the boundary is what lets the inspector be closed, deleted, or rebuilt without
+changing a dispatch — and it is what makes "the inspector costs nothing measurable" checkable
+rather than asserted (29.2 ms/token with profiling off against 29.4 with it on). The runtime
+throttles publication to 30 Hz; no panel schedules a frame.
+
+### 73. Attention sampling and per-kernel profiling are opt-in and duty-cycled
+
+**Chosen:** timestamp-query profiling on one decode step in 16; attention weights read back
+only while the heatmap panel is open, on the same cycle.
+**Rejected:** profiling every step; sampling attention every token.
+**Decided by:** the decode budget is one readback per token and the attention heatmap needs a
+second one. Rather than quietly breaking that rule, the panel is off by default and says in its
+own copy what turning it on costs. Profiling a step also records ~460 separate compute passes
+instead of one, which is not free even though it measured inside noise here.
+
+### 74. A mobile adapter gets a 1024-token context
+
+**Chosen:** `contextFor(profile)` returns 1024 when the adapter classifies as mobile.
+**Rejected:** one context length everywhere; asking the visitor.
+**Decided by:** prefill activations dominate resident memory and scale with the square of the
+context — the two attention buffers alone are 470 MiB at 2048 and 118 at 1024. On a phone that
+is the difference between running and failing to allocate. The device panel names the choice
+and the reason rather than silently shipping a different product.
+
+### 75. Three.js, GSAP and Lenis are loaded after first paint
+
+**Chosen:** a 8.24 kB entry bundle; the engine behind the load button, the hero behind a
+dynamic import.
+**Rejected:** one bundle, on the grounds that 773 kB is 0.2% of the model download.
+**Decided by:** that argument is right about bandwidth and wrong about the first three seconds.
+A visitor who reads the page and never runs the demo should not download an inference engine,
+and a hero that arrives a beat late costs nothing. Lighthouse: desktop 100/100/100/100, mobile
+96/100/100/100 with FCP 1.6 s under 4× CPU throttling.

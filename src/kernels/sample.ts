@@ -4,6 +4,11 @@ import type { KernelSpec } from './kernel.ts';
 /**
  * logits, history, out, dims. One workgroup for the whole vocabulary.
  *
+ * `logits` is bound read_write: the repetition penalty is applied into it in place, so the
+ * buffer is modified by sampling. Nothing downstream reads the logits after a sampled step —
+ * the evaluation paths that do read them (`logitsAfter`) run at a penalty of 1.0, which is a
+ * no-op.
+ *
  * Everything the decode loop needs to choose a token happens here: repetition penalty,
  * temperature, top-p and the draw. Only `out[0]` is ever read back, which is the four bytes
  * the project's one-readback-per-token budget allows.
@@ -11,7 +16,7 @@ import type { KernelSpec } from './kernel.ts';
 export const SAMPLE: KernelSpec = {
   name: 'sample',
   code,
-  bindings: ['read', 'read', 'read_write', 'uniform'],
+  bindings: ['read_write', 'read', 'read_write', 'uniform'],
   workgroupSize: [256, 1, 1],
   uniformBytes: 32,
 };

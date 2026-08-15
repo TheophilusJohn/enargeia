@@ -957,3 +957,127 @@ gone entirely, so halving the bytes of a term that costs nothing buys nothing. *
 is now purely a memory optimization**: 24 MiB instead of 48 at a 2048 context, at a 4% prefill
 cost from the pack dispatches. Still worth it on a phone, still not a speed feature, and now not
 a speed feature for a second and better-understood reason.
+
+---
+
+# M7 — the site
+
+## A sampling bug the site found
+
+Building the chat surface put the engine in front of realistic settings for the first time:
+temperature 0.7, top-p 0.9, repetition penalty 1.1. Decode measured **85 ms/token** against
+the harness's 22. Varying one sampling parameter at a time located it immediately.
+
+| configuration | before | after |
+|---|---|---|
+| greedy | 26.7 ms | 26.7 |
+| temperature only | 26.4 | 24.7 |
+| top-p 0.9 only | 26.3 | 28.5 |
+| **repetition penalty 1.1 only** | **71.4** | **24.4** |
+| all three (the app's defaults) | **84.9** | **28.6** |
+
+**The repetition penalty was 2.7× the cost of everything else in decoding put together.**
+`sample.wgsl` applied it in a helper called at the point of reading a logit, and that helper
+scanned the entire history for every read. The vocabulary is read about 36 times per token —
+max, sum, 32 bisection steps, the draw — so the cost was `vocab × history × 36`. At a
+500-token history that is 2.7 billion comparisons to penalize at most 500 tokens.
+
+The fix applies the penalty once, in place, before anything reads a logit: threads split the
+history, only the first occurrence of an id applies (so no two threads write the same address
+and no atomics are needed), then a `storageBarrier()`. Cost goes from 36 passes over the
+vocabulary to one pass over the history. **3.0× on the app's default sampling settings**, and
+the penalty is now free — 24.4 ms with it against 26.7 greedy, inside noise.
+
+Parity: `npm run session` 9/9, `npm run parity` 387/387 isolated, `npm test` 252/252. The
+greedy path is arithmetically unchanged and reproduces the no-cache path 24/24.
+
+Worth noting where this was found. Every harness in this file measures with `GREEDY`, because
+greedy is what parity requires — and greedy skips the penalty entirely. **A cost that only
+appears under settings no test uses is invisible to the whole test suite.** The site was the
+first thing to run the engine the way a person would.
+
+## What the demo measures against the harness
+
+Same device, same weights, measured through the page rather than through vitest. Median of
+three generations, each a full reply.
+
+| configuration | ms/token | tok/s |
+|---|---|---|
+| as shipped — page motion, inspector profiling, sampled | 29.4 | 34.0 |
+| inspector profiling off | 29.2 | 34.3 |
+| page motion stopped as well | 30.2 | 33.1 |
+| greedy, no motion — the harness's configuration | 29.6 | 33.8 |
+| **the harness itself, `npm run ablation` at ctx 512** | **22.0** | **45.5** |
+
+Two null results and one real gap:
+
+- **The inspector costs nothing measurable.** Panels read a published snapshot at 30 Hz and
+  per-kernel timing profiles one step in 16. 29.2 against 29.4 ms is noise.
+- **Page motion costs nothing measurable either**, which contradicts an earlier reading in
+  this session: before the sampling fix, stopping every `requestAnimationFrame` loop moved
+  116 ms/token to 100. That gap does not reproduce now, so the earlier 14% was almost
+  certainly variance on a much larger number rather than a real compositor tax. Recorded
+  because the wrong inference was made first.
+- **The page costs about 4 ms/token against the harness**: the inspector's own rolling
+  inter-token readout says 26.3 ms while wall clock over a whole reply says 29.4, and the
+  harness says 22.0. Per-token tokenizer decode, DOM updates and sharing a GPU with the
+  compositor are all in that 4–7 ms. The site says so next to the demo rather than quoting
+  the headless figure as if a visitor would see it.
+
+## Per-kernel GPU time, one decode step
+
+From `timestamp-query`, one profiled step in 16, at a short context. **460 dispatches,
+23.8 ms of GPU time per token** — 460 rather than 412 because the f16 KV cache adds a pack
+dispatch for K and V in each of the 24 layers.
+
+| group | share |
+|---|---|
+| projection | 61.1% |
+| embedding (tied LM head) | 24.7% |
+| sample | 9.3% |
+| attention | 2.4% |
+| rmsnorm | 1.1% |
+| mlp (SwiGLU + residual adds) | 0.9% |
+| rope | 0.6% |
+
+The tied LM head at 24.7% is the second-largest consumer in the model, from a single dispatch
+of 460 — 896 × 151,936 against 896 × 896 for a projection. Attention at 2.4% is the parallel
+history reduction doing its job; before that change it was the term that grew with context.
+
+## Memory, live
+
+| | |
+|---|---|
+| weights (int4, int8 embedding) | 334.9 MiB |
+| KV cache at 2048, f16 | 24.0 MiB |
+| activation scratch | 773.8 MiB |
+| **resident total** | **1132.6 MiB** |
+
+The scratch is the prefill graph, allocated once for the longest prompt it must accept. Two
+14 × 2048 × 2048 attention buffers are 470 MiB of it on their own, and it scales with the
+square of the context — which is why a mobile-class adapter gets a 1024-token context instead,
+cutting those two buffers to 118 MiB. The inspector reports the whole ledger rather than only
+the weights, because 335 MiB is the honest number for the weights and not for the process.
+
+## Lighthouse and mobile
+
+`npx lighthouse`, production build served by `vite preview`.
+
+| | performance | accessibility | best practices | SEO |
+|---|---|---|---|---|
+| desktop | **100** | **100** | **100** | **100** |
+| mobile (slow 4G, 4× CPU throttle) | **96** | **100** | **100** | **100** |
+
+Mobile metrics: FCP 1.6 s, LCP 2.5 s, TBT 100 ms, CLS 0.
+
+Three changes got there. The initial JavaScript bundle is **8.24 kB** (3.67 kB gzipped): the
+engine, kernels, tokenizer and inspector are behind the load button, and Three.js — 517 kB, the
+largest thing on the page after the model — is imported after first paint. Fonts are
+self-hosted latin subsets with `preload`, rather than Google's render-blocking stylesheet on two
+extra connections. And the contrast audit caught `--muted` (#63637C, 3.5:1 on the background)
+being used for eyebrows, table headers and the footer — content, not decoration, which is
+exactly the line the design system draws. Those moved to `--dim`.
+
+Checked on an iPhone 14 Pro profile: no horizontal overflow at 393 px, and the pinned pipeline
+section drops its pin below 760 px, because holding the viewport for seven screens of scroll on
+a phone is hostile rather than controlled.

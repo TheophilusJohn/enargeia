@@ -1,0 +1,17 @@
+# Enargeia
+
+> A browser-native LLM inference engine. Hand-written WGSL compute kernels, int4 block-wise
+> quantized weights, no ML framework. Qwen2.5-0.5B-Instruct runs entirely on the visitor's GPU.
+
+Measured on an Apple M2, headless Chromium: decode 45.5 tok/s at a 512-token context and
+43.1 at 2048, prefill 1105 tok/s at 128 tokens, 334.9 MiB of weights resident against
+1884.6 MiB for the same model in fp32. Perplexity 36.21 against 31.90 in fp32 over 1,256
+held-out positions. No inference happens on a server.
+
+## Documents
+
+- [Measurement log](https://github.com/TheophilusJohn/enargeia/blob/main/BENCH.md): every
+  number on the site, with method, including the changes that made things slower.
+- [Decision log](https://github.com/TheophilusJohn/enargeia/blob/main/docs/DECISIONS.md)
+- [Tiled matmul walkthrough](https://github.com/TheophilusJohn/enargeia/blob/main/docs/tiled-matmul.md)
+- [Source](https://github.com/TheophilusJohn/enargeia)

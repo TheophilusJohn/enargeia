@@ -95,6 +95,8 @@ export class DecodeGraph {
   /** The sampled id. Four bytes, and the only thing read back per token. */
   readonly result: PooledBuffer;
   readonly logits: PooledBuffer;
+  /** Exposed so the inspector can sample it; nothing in the decode path reads it back. */
+  attentionWeights: PooledBuffer | null = null;
 
   private readonly device: GPUDevice;
   private readonly pool: BufferPool;
@@ -159,6 +161,7 @@ export class DecodeGraph {
     const qRope = scratch(C.hidden, 'q_rope');
     const scores = scratch(C.heads * maxContext, 'scores');
     const attnWeights = scratch(C.heads * maxContext, 'attn_weights');
+    this.attentionWeights = attnWeights;
     const attnOut = scratch(C.hidden, 'attn_out');
     const projected = scratch(C.hidden, 'o_proj');
     const gate = scratch(C.intermediate, 'mlp_gate');
@@ -401,6 +404,40 @@ export class DecodeGraph {
     const used = this.steps.length * this.uniformStride;
     this.device.queue.writeBuffer(this.uniformBlock.buffer, 0, this.uniformStaging, 0, used);
   }
+
+  /**
+   * Record every step in its own compute pass with timestamps, for the inspector's per-kernel
+   * breakdown.
+   *
+   * ~410 passes instead of one, so this is materially more expensive than a normal step and is
+   * run on a duty cycle rather than every token. Step order is preserved exactly — grouping by
+   * kernel name would reorder dependent dispatches and produce a fast, wrong answer.
+   */
+  encodeProfiled(encoder: GPUCommandEncoder, position: number, querySet: GPUQuerySet): number {
+    let query = 0;
+    for (const step of this.steps) {
+      if (query + 2 > this.maxQueries) break;
+      const pass = encoder.beginComputePass({
+        label: `profile/${step.stage}`,
+        timestampWrites: {
+          querySet,
+          beginningOfPassWriteIndex: query,
+          endOfPassWriteIndex: query + 1,
+        },
+      });
+      step.kernel.encode(pass, step.bindGroup, step.workgroupsFor(position));
+      pass.end();
+      query += 2;
+    }
+    return query / 2;
+  }
+
+  /** Kernel name of each step, in dispatch order, for attributing timestamps. */
+  get stepKernels(): string[] {
+    return this.steps.map((step) => step.kernel.spec.name);
+  }
+
+  readonly maxQueries = 4096;
 
   encode(encoder: GPUCommandEncoder, position: number): void {
     const pass = encoder.beginComputePass({ label: 'decode' });
