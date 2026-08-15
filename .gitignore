@@ -33,3 +33,6 @@ tools/.venv/
 
 test/fixtures/model.safetensors
 test/fixtures/reference.bin
+
+# Browser sweep screenshots
+.sweep/

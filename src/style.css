@@ -47,6 +47,10 @@
   --display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
+  /* Measured from the real masthead at runtime; this is the fallback and the value used
+   * before the script runs. Anything that pins or anchors has to clear it. */
+  --masthead-h: 53px;
+
   --gutter: clamp(20px, 5vw, 64px);
   --measure: 68ch;
 }
@@ -60,6 +64,8 @@
 html {
   background: var(--bg);
   color-scheme: dark;
+  /* In-page anchors land below the sticky masthead instead of behind it. */
+  scroll-padding-top: calc(var(--masthead-h) + 16px);
 }
 
 body {
@@ -141,8 +147,12 @@ code,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px var(--gutter);
+  /* Wraps instead of overflowing: five links plus the wordmark do not fit on a 320px screen,
+   * and the page scrolled sideways. `--masthead-h` is re-measured on resize, so everything
+   * that pins or anchors follows the taller header. */
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 10px var(--gutter);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
@@ -156,12 +166,17 @@ code,
 }
 .masthead nav {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 2px 16px;
   font-size: 13px;
 }
 .masthead nav a {
   color: var(--dim);
   text-decoration: none;
+  /* 24px minimum target, per WCAG 2.5.8. Padding rather than a min-height so the links stay
+   * on the text baseline. */
+  padding: 5px 2px;
+  display: inline-block;
 }
 .masthead nav a:hover {
   color: var(--ink);
@@ -460,6 +475,10 @@ button.primary:hover:not(:disabled) {
 }
 .bar i {
   display: block;
+  /* Explicitly zero. An <i> with `display: block` and no width resolves to `auto`, which is
+   * the full width of the bar — so both loading bars rendered as complete before a byte had
+   * been fetched. */
+  width: 0;
   height: 100%;
   background: var(--k4);
   /* Width is data. The transition only smooths between real samples. */
@@ -493,6 +512,7 @@ button.primary:hover:not(:disabled) {
 }
 .kernel-row .track i {
   display: block;
+  width: 0;
   height: 100%;
 }
 /* The percentage is text, not only bar width — every animated visual has a text equivalent. */
@@ -589,6 +609,17 @@ section {
   padding-block: clamp(44px, 7vw, 92px);
   border-top: 1px solid var(--line);
 }
+
+/* The pinned pipeline section, while it is holding the viewport. Only applied when the pin is
+ * actually created — never under reduced motion or at narrow widths, which lay the same
+ * content out as an ordinary scrolling section. */
+section.is-pinned {
+  min-height: calc(100svh - var(--masthead-h));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: clamp(24px, 4vw, 48px);
+}
 section > h2 {
   font-size: clamp(26px, 4vw, 44px);
   max-width: 18ch;
@@ -626,6 +657,10 @@ table.bench td.n {
   text-align: right;
 }
 
+footer a {
+  display: inline-block;
+  padding: 4px 0;
+}
 footer {
   padding: 36px var(--gutter) 64px;
   border-top: 1px solid var(--line);

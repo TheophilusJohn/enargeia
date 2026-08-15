@@ -8,7 +8,7 @@
  * one without waiting to find out.
  */
 
-import { el, mb, duration, rate } from './format.ts';
+import { el, mb, mib, duration, rate } from './format.ts';
 import type { LoadState } from './engine.ts';
 
 const MODEL_BYTES = 351_187_968;
@@ -21,6 +21,7 @@ function phaseRow(label: string): {
 } {
   const detail = el('b', { text: '—' });
   const fill = el('i');
+  fill.style.width = '0%';
   const root = el('div', { class: 'phase' }, [
     el('div', { class: 'top' }, [el('span', { text: label }), detail]),
     el('div', {
@@ -47,7 +48,6 @@ function phaseRow(label: string): {
 
 export class Loader {
   readonly root = el('div', { class: 'loader' });
-  private readonly headline = el('h2', { text: 'Run a language model on your own GPU' });
   private readonly status = el('p', { class: 'prose' });
   private readonly download = phaseRow('Download — weights');
   private readonly compile = phaseRow('Compile — compute pipelines');
@@ -55,7 +55,7 @@ export class Loader {
   private readonly detail = el('p', { class: 'note' });
 
   constructor(onStart: () => void) {
-    this.start.textContent = `Load the model — ${mb(MODEL_BYTES)}`;
+    this.start.textContent = `Load the model — ${mib(MODEL_BYTES)}`;
     this.start.addEventListener('click', () => {
       this.start.disabled = true;
       this.start.textContent = 'Loading…';
@@ -73,7 +73,6 @@ export class Loader {
       'closer to a minute.';
 
     this.root.append(
-      this.headline,
       this.status,
       this.start,
       el('div', { class: 'phases' }, [this.download.root, this.compile.root]),

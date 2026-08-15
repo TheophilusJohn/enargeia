@@ -5,8 +5,9 @@
  * step issues, in the order `src/model/graph_decode.ts` builds it — this is not an illustration
  * of a transformer, it is the list of compute passes this engine encodes to produce one token.
  *
- * Under `prefers-reduced-motion` the scrub is disabled and every stage is shown at once as a
- * plain list, which is the same information without the scroll dependency.
+ * Under `prefers-reduced-motion`, and at narrow widths, the scrub is disabled and every stage is
+ * shown at once as a plain list — the same information without the scroll dependency. Both of
+ * those are separate code paths and both are checked by `npm run sweep`.
  */
 
 import gsap from 'gsap';
@@ -94,17 +95,42 @@ export const STAGES: Stage[] = [
 
 export const TOTAL_DISPATCHES = STAGES.reduce((n, s) => n + s.dispatches, 0);
 
-export function mountPipeline(section: HTMLElement): void {
+/** Height of the sticky masthead, which everything that pins or anchors has to clear. */
+function mastheadHeight(): number {
+  return document.querySelector('.masthead')?.getBoundingClientRect().height ?? 53;
+}
+
+export function mountPipeline(container: HTMLElement): void {
+  // Pin the *section*, not this container.
+  //
+  // Pinning the inner div was the bug: the section's heading scrolled away while the stage grid
+  // stuck to the top of the viewport underneath a sticky masthead that covered its first line,
+  // and because the grid is only ~280px tall, the rest of the pinned viewport was empty. It
+  // looked correct in exactly one place — the first frame of the pin — which is the frame every
+  // screenshot had been taken at.
+  const section = container.closest('section') ?? container;
+
   // Pin-and-scrub is a desktop affordance. On a narrow screen the two columns stack, and
   // holding the viewport for seven screens of scroll on a phone is hostile rather than
   // controlled — so the same content is laid out plainly instead.
   const reduced =
     matchMedia('(prefers-reduced-motion: reduce)').matches || matchMedia('(max-width: 760px)').matches;
 
-  const rows = STAGES.map((stage) => {
+  // The list selects which stage the panel describes, which is a tablist. Marking it as one
+  // gives a screen reader the relationship between the two halves, and arrow keys move between
+  // stages the way they do in every other tablist — neither of which a screenshot review would
+  // ever have caught.
+  const rows = STAGES.map((stage, index) => {
     const swatch = el('span', { class: 'stage-swatch' });
     swatch.style.background = stage.colour;
-    const row = el('button', { class: 'stage-row', type: 'button' }, [
+    const row = el('button', {
+      class: 'stage-row',
+      type: 'button',
+      role: 'tab',
+      id: `stage-tab-${index}`,
+      'aria-controls': 'stage-detail',
+      'aria-selected': 'false',
+    }, [
       swatch,
       el('span', { class: 'stage-name', text: stage.name }),
       el('span', { class: 'stage-count', text: `${stage.dispatches}×` }),
@@ -112,19 +138,35 @@ export function mountPipeline(section: HTMLElement): void {
     return row;
   });
 
-  const detail = el('div', { class: 'stage-detail' });
+  const detail = el('div', {
+    class: 'stage-detail',
+    id: 'stage-detail',
+    role: 'tabpanel',
+    'aria-live': 'polite',
+  });
   const title = el('h3');
   const body = el('p', { class: 'prose' });
   const count = el('p', { class: 'note' });
   detail.append(title, body, count);
 
-  const list = el('div', { class: 'stage-list' }, rows);
+  const list = el('div', {
+    class: 'stage-list',
+    role: 'tablist',
+    'aria-label': 'Stages of one decode step',
+  }, rows);
   const grid = el('div', { class: 'stage-grid' }, [list, detail]);
-  section.append(grid);
+  container.append(grid);
 
-  const show = (index: number) => {
+  const show = (index: number, focus = false) => {
     const stage = STAGES[index];
-    rows.forEach((row, i) => row.classList.toggle('active', i === index));
+    rows.forEach((row, i) => {
+      row.classList.toggle('active', i === index);
+      row.setAttribute('aria-selected', String(i === index));
+      // Roving tabindex: one stop for the whole list, arrows move within it.
+      row.tabIndex = i === index ? 0 : -1;
+    });
+    detail.setAttribute('aria-labelledby', `stage-tab-${index}`);
+    if (focus) rows[index].focus();
     title.textContent = stage.name;
     body.textContent = stage.what;
     const share = stage.dispatches / TOTAL_DISPATCHES;
@@ -134,6 +176,17 @@ export function mountPipeline(section: HTMLElement): void {
     title.style.color = stage.colour;
   };
   rows.forEach((row, i) => row.addEventListener('click', () => show(i)));
+  list.addEventListener('keydown', (event) => {
+    const current = rows.findIndex((row) => row.classList.contains('active'));
+    const step =
+      event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 :
+      event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -1 :
+      event.key === 'Home' ? -current :
+      event.key === 'End' ? STAGES.length - 1 - current : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    show((current + step + STAGES.length) % STAGES.length, true);
+  });
   show(0);
 
   if (reduced) {
@@ -149,15 +202,33 @@ export function mountPipeline(section: HTMLElement): void {
     return;
   }
 
+  // The pinned section fills the viewport below the masthead and centres its content, so the
+  // playhead sits in a composed frame rather than at the top of a mostly-empty screen.
+  section.classList.add('is-pinned');
+  document.documentElement.style.setProperty('--masthead-h', `${mastheadHeight()}px`);
+
   ScrollTrigger.create({
     trigger: section,
-    start: 'top top',
-    end: `+=${STAGES.length * 320}`,
-    pin: true,
-    scrub: true,
+    // Start where the section's top meets the *bottom of the masthead*, not the top of the
+    // viewport. `start: 'top top'` slides the first line of content under a sticky header.
+    start: () => `top ${mastheadHeight()}px`,
+    end: () => `+=${STAGES.length * 300}`,
+    pin: section,
+    pinSpacing: true,
+    // Both recomputed on resize: the masthead wraps to two lines on a narrow window, and a
+    // start offset measured once at load would be wrong from then on.
+    invalidateOnRefresh: true,
+    anticipatePin: 1,
     onUpdate: (self) => {
       const index = Math.min(STAGES.length - 1, Math.floor(self.progress * STAGES.length));
       show(index);
     },
+  });
+
+  // Fonts change the section's height, and a stale measurement leaves the pin ending in the
+  // wrong place.
+  void document.fonts?.ready.then(() => ScrollTrigger.refresh());
+  addEventListener('resize', () => {
+    document.documentElement.style.setProperty('--masthead-h', `${mastheadHeight()}px`);
   });
 }

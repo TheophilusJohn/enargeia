@@ -941,3 +941,29 @@ development and production differ in that value and nothing else.
 limits; committing 335 MB to the Pages build, which caps files at 25 MiB.
 **Decided by:** the loader is built on range requests, so the host has to support them and has
 to expose `Content-Range` cross-origin. R2 does both; a zone domain adds the CDN cache in front.
+
+### 80. The pipeline section pins the section, offset by the masthead
+
+**Chosen:** `pin: section`, `start: () => 'top ' + mastheadHeight() + 'px'`,
+`invalidateOnRefresh: true`, and a `--masthead-h` custom property re-measured on resize.
+**Rejected:** pinning the inner container with `start: 'top top'`, which is what shipped; a
+`position: sticky` rewrite.
+**Decided by:** the inner container was the wrong element and `top top` was the wrong offset,
+and together they produced a section that never actually pinned and whose first line sat under
+a sticky header. Sticky was rejected because it would have had the identical header-overlap
+bug — the fault was the missing offset, not the mechanism.
+
+The reported symptom was "broken in Safari". It reproduces identically in Chromium; the box
+geometry at four scroll positions matches to the pixel in both engines. It survived every
+previous check because every check screenshotted the section immediately after scrolling it
+into view, which is the one position where a failed pin looks correct.
+
+### 81. Cross-browser verification is a command, not a habit
+
+**Chosen:** `npm run sweep` — every section at five widths in WebKit, with a module preflight
+and automatic checks for overflow, undersized tap targets and console errors.
+**Rejected:** relying on remembering to open a second browser.
+**Decided by:** the site was built and shipped after being looked at only in headless Chromium,
+and the first person to open it elsewhere found a broken section in seconds. Two of the six
+faults the first sweep found — bars that rendered full when empty, and a masthead that
+overflowed at 320 px — were browser-independent and had simply never been looked at.

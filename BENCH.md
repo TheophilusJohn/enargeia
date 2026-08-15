@@ -1233,3 +1233,85 @@ Two deployment faults worth recording, both invisible until the site was actuall
   the project was created; nobody noticed because until now it was a scaffold.
 - **`vite build` copies `public/` wholesale**, so `dist/` carried every `.enargeia` file in
   `public/models/` — up to 2 GB, against a Pages limit of 25 MiB per file.
+
+---
+
+# M7 — cross-browser verification
+
+## The pinned section, and what "broken in Safari" turned out to mean
+
+Reported as a Safari bug: the stage heading clipped behind the sticky masthead, and about a
+viewport of empty space below the content. Both reproduce exactly. **Neither is a Safari bug.**
+
+Driving the same page in WebKit 26.5 and Chromium and reading the pinned element's box at four
+scroll positions gives identical numbers in both engines:
+
+| scroll | section top | `position` | active stage |
+|---|---|---|---|
+| pin start | 0 | static | embedding |
+| +400 | −400 | static | embedding |
+| +900 | −900 | static | rmsnorm |
+| +1800 | −1800 | static | attention |
+
+The element never becomes `fixed` and its top marches off the screen — the pin was never
+holding, in any browser. The cause: `mountPipeline` pinned the element it was handed, which is
+the inner `<div id="pipeline-stages">`, not the `<section>` around it. So the section heading
+scrolled away while the stage grid stuck under a 53 px sticky masthead that covered its first
+line, and because the grid is 284 px tall in an 847 px viewport, the rest was empty.
+
+It looked correct in exactly one position — the first frame of the pin — **which is the frame
+every screenshot in this project had been taken at**, because every check scrolled the section
+into view and shot it immediately.
+
+Fixed by pinning the section, starting at `top ${mastheadHeight()}px` rather than `top top`,
+and giving the pinned section `min-height: calc(100svh - var(--masthead-h))` with its content
+centred. After:
+
+| scroll | section top | `position` | active stage |
+|---|---|---|---|
+| pin start | 52 | fixed | embedding |
+| +400 | 52 | fixed | rmsnorm |
+| +900 | 52 | fixed | rope |
+| +1800 | 52 | fixed | sample |
+
+Identical in WebKit and Chromium. The two no-pin paths — `prefers-reduced-motion` and widths
+under 760 px — create no pin and no spacer, and lay all seven stages out as a plain list.
+
+## What else the first non-Chromium sweep found
+
+`npm run sweep` — every section, five widths, WebKit, with automatic checks for the failure
+classes a screenshot review misses.
+
+| | |
+|---|---|
+| **Both loading bars rendered full before any download** | `.bar i` is `display: block` with no width, which resolves to `auto` — the full width of the bar. Present in every browser since the loader was written, and invisible in every screenshot because they were all taken after clicking Load. |
+| **Horizontal overflow at 320 px** | The masthead's five nav links plus the wordmark forced `scrollWidth` to 381. The masthead now wraps, and `--masthead-h` is re-measured on resize so the pin start follows it. |
+| **Nav and footer links were 16–21 px tall** | Under the 24 px minimum in WCAG 2.5.8. Padded to clear it. The two remaining flagged links are inline in sentences, which that criterion exempts. |
+| **"The panel on the right"** | False at narrow widths, where the inspector is below the chat. |
+| **"Load the model — 351 MB" beside "334.9 MiB"** | Two numbers for one quantity on one screen. Both were right; only one is now shown. |
+| **A duplicate heading** | The loader repeated the section's heading directly beneath it. |
+
+Anchor links also landed their targets behind the sticky masthead — fixed with
+`scroll-padding-top` on `html`, which is a different symptom of the same missing offset.
+
+## A cache hazard, self-inflicted
+
+The first sweep of the live site reported a module served as `text/html`, while `curl` got the
+same URL as `application/javascript`. Both were true: the sweep had requested the asset in the
+window between the deploy completing and the file propagating, Cloudflare cached the SPA
+fallback against that URL, and afterwards the edge served two different responses for one path.
+Redeploying does not clear it and the OAuth token cannot purge; escaping the URL by changing the
+chunk's content hash does.
+
+`npm run sweep` now preflights every module the document references with a plain fetch and
+refuses to open a browser unless they are all served as JavaScript — so a stale asset is
+reported as a deployment problem instead of being requested and cached.
+
+## Scope of the verification
+
+WebKit 26.5, which is Safari 26's engine, driven through Playwright. **Not Safari itself**:
+`safaridriver` requires "Allow remote automation" in Safari's Developer settings, and
+`screencapture` requires Screen Recording permission — both are user-granted and neither is
+enabled. `tools/safari.mjs` is a WebDriver client ready to run against the real browser once
+that box is ticked. The finding that mattered most does not depend on it: the reported bug was
+never engine-specific and reproduces in Chromium.
