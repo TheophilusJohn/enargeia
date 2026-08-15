@@ -25,7 +25,8 @@
     "residency": "node tools/residency.mjs",
     "lighthouse": "bash tools/lighthouse.sh",
     "sweep": "node tools/browser-sweep.mjs",
-    "scrollcheck": "node tools/scroll-check.mjs"
+    "scrollcheck": "node tools/scroll-check.mjs",
+    "softwarecheck": "node tools/software-check.mjs"
   },
   "devDependencies": {
     "@types/three": "^0.185.4",

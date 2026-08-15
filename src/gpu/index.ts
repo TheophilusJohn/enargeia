@@ -1,10 +1,12 @@
 export {
   initGPU,
+  classifySoftware,
   GPUUnavailableError,
   DEFAULT_STORAGE_BINDING_SIZE,
   type GPUContext,
   type DeviceProfile,
   type DeviceTier,
+  type SoftwareRasterizer,
   type InitOptions,
 } from './device.ts';
 

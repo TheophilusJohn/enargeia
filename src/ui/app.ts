@@ -77,11 +77,12 @@ export function mountApp(host: HTMLElement): void {
     // it is on the path to first paint, and a visitor who reads the page without running the
     // demo never downloads any of it.
     void (async () => {
-      const [{ Engine, UnsupportedError }, { Chat }, { Inspector }] = await Promise.all([
-        import('./engine.ts'),
-        import('./chat.ts'),
-        import('./inspector.ts'),
-      ]);
+      const [{ Engine, UnsupportedError }, { Chat }, { Inspector, softwareNotice }] =
+        await Promise.all([
+          import('./engine.ts'),
+          import('./chat.ts'),
+          import('./inspector.ts'),
+        ]);
 
       const engine = new Engine({
         onLoad: (state: LoadState) => loader.update(state),
@@ -119,7 +120,13 @@ export function mountApp(host: HTMLElement): void {
         (window as unknown as Record<string, unknown>).__enargeia = { engine, inspector };
       }
 
-      host.replaceChildren(el('div', { class: 'app' }, [chat.root, inspector.root]));
+      // Above the chat as well as in the device panel: someone who never opens the inspector
+      // still needs to know why the thing they are watching is slow.
+      const notice = softwareNotice(engine.profile!.software);
+      host.replaceChildren(
+        ...(notice ? [notice] : []),
+        el('div', { class: 'app' }, [chat.root, inspector.root]),
+      );
       if (pending) inspector.update(pending);
     })();
   });

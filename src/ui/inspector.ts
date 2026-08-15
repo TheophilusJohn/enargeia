@@ -9,8 +9,43 @@
  */
 
 import type { Telemetry } from '../runtime/telemetry.ts';
-import type { DeviceProfile } from '../gpu/device.ts';
+import type { DeviceProfile, SoftwareRasterizer } from '../gpu/device.ts';
 import { el, mib, ms, pct } from './format.ts';
+
+/**
+ * The one place the software-rasterizer copy lives, so the three surfaces that show it — the
+ * device panel, the banner above the chat, and the throughput readout — cannot drift apart.
+ */
+export const SOFTWARE_NOTICE: Record<Exclude<SoftwareRasterizer, 'no'>, { heading: string; body: string }> = {
+  yes: {
+    heading: 'Rendering is falling back to software',
+    body:
+      'This browser is running WebGPU on a software rasterizer rather than your graphics card. ' +
+      'Everything still works and every result is correct, but throughput will be roughly two ' +
+      'orders of magnitude below the numbers on this page — tenths of a token per second ' +
+      'instead of tens. Restarting the browser usually fixes it; failing that, check that ' +
+      'hardware acceleration is enabled in its settings.',
+  },
+  suspected: {
+    heading: 'This may be a software rasterizer',
+    body:
+      'The adapter reports no architecture and no shader-f16, which is the shape a software ' +
+      'fallback takes once a browser has redacted its adapter strings. It may equally be a ' +
+      'real GPU whose details this browser withholds. If throughput comes out near a token ' +
+      'per second rather than tens, it is the former, and restarting the browser usually ' +
+      'fixes it.',
+  },
+};
+
+/** A standalone notice, used above the chat and inside the device panel. */
+export function softwareNotice(state: SoftwareRasterizer): HTMLElement | null {
+  if (state === 'no') return null;
+  const { heading, body } = SOFTWARE_NOTICE[state];
+  return el('div', { class: `notice ${state === 'yes' ? 'warn' : ''}`, role: 'status' }, [
+    el('strong', { text: heading }),
+    el('p', { class: 'prose', text: body }),
+  ]);
+}
 
 function gauge(title: string, body: HTMLElement): HTMLElement {
   return el('section', { class: 'gauge' }, [
@@ -24,12 +59,27 @@ class ThroughputPanel {
   readonly root: HTMLElement;
   private readonly value = el('span', { class: 'big', text: '—' });
   private readonly detail = el('dl', { class: 'kv' });
+  private readonly note = el('p', { class: 'note warn-text', hidden: '' });
 
-  constructor() {
+  constructor(software: SoftwareRasterizer) {
     this.root = gauge('Throughput', el('div', {}, [
       el('div', { class: 'readout' }, [this.value, el('span', { class: 'unit', text: 'tok/s' })]),
       this.detail,
+      this.note,
     ]));
+    this.annotate(software);
+  }
+
+  /** Static from the device profile, so it is right before a single token has been produced. */
+  private annotate(software: SoftwareRasterizer): void {
+    this.note.textContent =
+      software === 'no'
+        ? ''
+        : software === 'yes'
+          ? 'Software rasterizer — this figure is not what the hardware does. See the device panel.'
+          : 'Possibly a software rasterizer; if this reads near 1 tok/s it is. See the device panel.';
+    this.note.hidden = software === 'no';
+    this.value.classList.toggle('degraded', software === 'yes');
   }
 
   update(t: Telemetry): void {
@@ -42,6 +92,9 @@ class ThroughputPanel {
       el('dt', { text: 'phase' }),
       el('dd', { class: t.phase === 'idle' ? '' : 'ok', text: t.phase }),
     );
+    // A number two orders of magnitude below the published one should not sit there looking
+    // like a result. It arrives with its cause attached or not at all.
+    if (t.device) this.annotate(t.device.software);
   }
 }
 
@@ -253,6 +306,8 @@ export function devicePanel(
   };
 
   row('adapter', profile.description || profile.device || 'unnamed');
+  row('architecture', profile.architecture || 'not reported',
+    profile.software === 'yes' ? 'warn' : '');
   row('tier', profile.tier);
   row('shader-f16', profile.f16 ? 'present' : 'absent', profile.f16 ? 'ok' : 'warn');
   row('timestamp-query', profile.timestampQuery ? 'present' : 'absent',
@@ -293,7 +348,9 @@ export function devicePanel(
     );
   }
 
+  const notice = softwareNotice(profile.software);
   return gauge('This device', el('div', {}, [
+    ...(notice ? [notice] : []),
     list,
     ...fallbacks.map((text) => el('p', { class: 'note', text })),
   ]));
@@ -318,7 +375,7 @@ export class Inspector {
     maxContext: number;
     onAttentionToggle: (enabled: boolean) => void;
   }) {
-    const throughput = new ThroughputPanel();
+    const throughput = new ThroughputPanel(options.profile.software);
     const cache = new CachePanel();
     const kernels = new KernelPanel(options.profile.timestampQuery);
     const memory = new MemoryPanel();

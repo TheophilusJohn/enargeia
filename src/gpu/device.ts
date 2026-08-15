@@ -12,6 +12,17 @@ export const DEFAULT_STORAGE_BINDING_SIZE = 128 * 1024 * 1024;
 
 export type DeviceTier = 'discrete' | 'integrated' | 'mobile' | 'unknown';
 
+/**
+ * Whether the adapter is a software rasterizer.
+ *
+ * `yes` when the architecture names one outright — SwiftShader, LLVMpipe, Lavapipe, WARP.
+ * `suspected` when the adapter reports nothing at all *and* lacks `shader-f16`: browsers
+ * redact adapter strings for fingerprinting reasons, so a blank architecture on its own proves
+ * nothing, and roughly a third of real GPUs lack f16. Together they are worth mentioning and
+ * not worth asserting, which is why this is three states rather than a boolean.
+ */
+export type SoftwareRasterizer = 'no' | 'suspected' | 'yes';
+
 export interface DeviceProfile {
   /** `shader-f16` is enabled on the device. Roughly a third of devices lack it. */
   f16: boolean;
@@ -29,6 +40,12 @@ export interface DeviceProfile {
   maxStorageBuffersPerShaderStage: number;
 
   tier: DeviceTier;
+  /**
+   * Set when the adapter looks like a software rasterizer. Throughput is then roughly two
+   * orders of magnitude below the hardware figures — this was measured at 0.2 tok/s against
+   * 34–38 on the same machine an hour earlier, after Chromium fell back mid-session.
+   */
+  software: SoftwareRasterizer;
   vendor: string;
   architecture: string;
   device: string;
@@ -57,6 +74,12 @@ export interface InitOptions {
   clampStorageBindingSize?: boolean;
   /** Request the `subgroups` feature when the adapter offers it. Off by default. */
   requestSubgroups?: boolean;
+  /**
+   * Report the adapter as a software rasterizer whatever it actually is, so the warning path
+   * can be exercised on a machine with a working GPU. Resolves from `?forceSoftware` when
+   * left undefined.
+   */
+  forceSoftware?: boolean;
   onDeviceLost?: (info: GPUDeviceLostInfo) => void;
   onUncapturedError?: (error: GPUError) => void;
   label?: string;
@@ -147,6 +170,7 @@ export async function initGPU(options: InitOptions = {}): Promise<GPUContext> {
     maxStorageBuffersPerShaderStage: l.maxStorageBuffersPerShaderStage,
 
     tier: classifyTier(info),
+    software: classifySoftware(info, device.features.has('shader-f16'), options.forceSoftware),
     vendor: info.vendor ?? '',
     architecture: info.architecture ?? '',
     device: info.device ?? '',
@@ -223,6 +247,36 @@ function clampRequestedByEnvironment(): boolean {
  * degrees. Used for reporting and for choosing defaults, never for correctness — a wrong
  * guess here must never be the difference between working and broken.
  */
+/**
+ * Software rasterizers, by the names they report.
+ *
+ * A visitor on one of these will measure throughput two orders of magnitude below every number
+ * on the site, and with nothing said about it the honest conclusion available to them is that
+ * the engine is slow.
+ */
+export function classifySoftware(
+  info: Partial<GPUAdapterInfo>,
+  f16: boolean,
+  force?: boolean,
+): SoftwareRasterizer {
+  if (force ?? forceSoftwareRequestedByEnvironment()) return 'yes';
+  const architecture = (info.architecture ?? '').toLowerCase();
+  const hay = `${info.vendor ?? ''} ${architecture} ${info.device ?? ''} ${info.description ?? ''}`.toLowerCase();
+  if (/swiftshader|llvmpipe|lavapipe|warp|softwarerasterizer|basic render/.test(hay)) return 'yes';
+  // Nothing reported *and* no f16. Either alone is unremarkable; together they are the shape a
+  // fallback adapter takes once the browser has redacted its strings.
+  if (architecture === '' && !f16) return 'suspected';
+  return 'no';
+}
+
+/** `?forceSoftware` on the URL, for exercising the warning without a broken GPU. */
+function forceSoftwareRequestedByEnvironment(): boolean {
+  if (typeof location !== 'undefined' && location.search) {
+    return new URLSearchParams(location.search).has('forceSoftware');
+  }
+  return false;
+}
+
 function classifyTier(info: Partial<GPUAdapterInfo>): DeviceTier {
   const hay = `${info.vendor ?? ''} ${info.architecture ?? ''} ${info.device ?? ''} ${info.description ?? ''}`.toLowerCase();
 

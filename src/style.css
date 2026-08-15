@@ -749,3 +749,46 @@ footer {
 .stage-detail .prose {
   font-size: 15px;
 }
+
+/* --- notices -------------------------------------------------------------- */
+/* Used for the software-rasterizer warning, above the chat and in the device panel. It is
+ * deliberately not styled as an error: nothing is broken, the numbers are just not the
+ * machine's. --k1 is the same hue the device panel already uses for a degraded capability. */
+.notice {
+  border: 1px solid color-mix(in srgb, var(--k1) 45%, var(--line));
+  background: color-mix(in srgb, var(--k1) 7%, transparent);
+  border-radius: 3px;
+  padding: 13px 15px;
+  margin-bottom: 14px;
+}
+.notice strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--k1);
+  margin-bottom: 5px;
+}
+.notice .prose {
+  font-size: 13px;
+  margin: 0;
+  max-width: 62ch;
+}
+.gauge .notice {
+  margin-bottom: 12px;
+  padding: 11px 12px;
+}
+.gauge .notice strong {
+  font-size: 13px;
+}
+.gauge .notice .prose {
+  font-size: 12px;
+}
+.note.warn-text {
+  color: var(--k1);
+}
+/* The reading itself, when it is not the hardware's. */
+.readout .big.degraded {
+  color: var(--k1);
+}

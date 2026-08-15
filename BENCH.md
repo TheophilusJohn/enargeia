@@ -1382,3 +1382,38 @@ where the device panel reports f16 present.
 
 Worth checking `navigator.gpu.requestAdapter().info.architecture` before believing any decode
 number that looks two orders of magnitude wrong.
+
+## The software-rasterizer warning
+
+Chromium fell back to SwiftShader mid-session on this machine and decode measured 0.2 tok/s
+against 34–38 an hour earlier. Nothing on the page said so, and the conclusion available to
+someone watching was that the engine is slow. The page now says so, in three places:
+
+- a notice above the chat, for someone who never opens the inspector;
+- a notice in the device panel, next to an `architecture` row that now reports the adapter's
+  own answer;
+- an annotation on the throughput reading, set from the device profile at construction rather
+  than on first telemetry, so it is right before a single token has been generated.
+
+Detection is three-state rather than boolean, and the middle state is the point. `yes` when the
+adapter names a known software rasterizer — SwiftShader, LLVMpipe, Lavapipe, WARP — in any of
+its strings. `suspected` when it reports **no architecture at all and lacks `shader-f16`**.
+Neither half is evidence alone: browsers redact adapter strings for fingerprinting reasons, and
+roughly a third of real GPUs have no f16. Telling someone with a working Intel GPU that their
+machine is misconfigured is worse than saying nothing, so that case gets softer copy and the
+false-positive cases are unit-tested directly.
+
+Verified in both directions, end to end, by injecting the fault with `?forceSoftware`:
+
+| engine | adapter | forced software | as reported |
+|---|---|---|---|
+| Chromium | `swiftshader` | warning on all three surfaces | **warning shown** — correctly, this machine really is on it |
+| WebKit | `apple` | warning on all three surfaces | **no warning** |
+
+WebKit reporting `apple` on the same machine is worth recording on its own: **the fallback is
+Chromium's, not the system's.** A restart of that browser is the fix, which is what the notice
+says.
+
+`test/gpu/software.test.ts` covers what the end-to-end check cannot, because there is no healthy
+Chromium adapter to point at today: an Intel/Adreno/AMD adapter without f16 must not warn, and a
+fully redacted adapter that does have f16 must not warn either.

@@ -1010,3 +1010,24 @@ must move the page, because the page's scroll position is the scrub.
 container that can only be dragged looks identical to one that scrolls. Screenshots cannot
 falsify a claim about event routing. The check runs with trusted input and starts from an
 injected fault, so it has been shown to fail before being trusted to pass.
+
+### 85. A degraded adapter is announced, in three places, with three states
+
+**Chosen:** `DeviceProfile.software` as `no | suspected | yes`, surfaced above the chat, in the
+device panel, and on the throughput reading itself.
+**Rejected:** a boolean; warning only in the inspector; warning only once telemetry arrives.
+**Decided by:** the number is the product. A reading two orders of magnitude below every
+published figure, with nothing attached to it, is indistinguishable from a result — and the
+person best placed to misread it is exactly the visitor the site is for. The throughput
+annotation is set from the profile at construction for the same reason: a panel that only
+becomes honest after the first generation is dishonest for the whole of the first impression.
+
+Three states because the evidence has two strengths. A named rasterizer is certain. A blank
+architecture plus absent `shader-f16` is the shape a redacted fallback takes, and also the shape
+of a perfectly good Intel GPU behind a privacy-conscious browser, so it says "may be" and the
+unit tests pin down every negative case.
+
+Injected with `?forceSoftware`, following `?clampStorage`. Both directions are verified end to
+end because Chromium and WebKit disagreed on this machine — Chromium on SwiftShader, WebKit on
+the Apple GPU — which gave the check a genuine negative case and, incidentally, identified the
+fallback as Chromium's rather than the system's.
